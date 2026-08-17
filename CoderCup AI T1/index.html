@@ -1,0 +1,2866 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presupuestos — Generador profesional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#0e1420;
+  --bg-soft:#141b2a;
+  --panel:rgba(255,255,255,0.06);
+  --panel-border:rgba(255,255,255,0.10);
+  --panel-solid:#1a2233;
+  --text:#eef1f8;
+  --text-dim:#9aa5b8;
+  --text-faint:#5f6a80;
+  --accent:#5b8def;
+  --accent-2:#3ecf8e;
+  --danger:#ef5b6f;
+  --warn:#e8b74b;
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 8px 30px rgba(0,0,0,0.35);
+  --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --pdf-color:#2a5bd7;
+  --pdf-font-display:'Fraunces', 'Georgia', serif;
+  --pdf-font-body:'Inter', -apple-system, sans-serif;
+  --pdf-tint: #f1f4fc;
+  --pdf-tint-2: #f7f8fd;
+  --pdf-shade: #24488f;
+  --pdf-tint-border: #b7c3e6;
+  --pdf-tint-border-soft: #d3d9ec;
+  --pdf-tint-total-border: #a9bcec;
+}
+html.light{
+  --bg:#eef1f6;
+  --bg-soft:#e4e9f2;
+  --panel:rgba(255,255,255,0.75);
+  --panel-border:rgba(20,30,50,0.10);
+  --panel-solid:#ffffff;
+  --text:#1a2233;
+  --text-dim:#5b6478;
+  --text-faint:#8b95a8;
+  --shadow:0 8px 24px rgba(30,40,70,0.10);
+}
+*{box-sizing:border-box;}
+body{margin:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-ui);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(91,141,239,0.20), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(62,207,142,0.12), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--panel-border);border-radius:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+a{color:inherit;}
+button{font-family:inherit;}
+
+.glass{
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-radius:var(--radius);
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:var(--shadow);
+}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:14px;
+  padding:12px 18px;
+  border-bottom:1px solid var(--panel-border);
+  background:var(--panel);
+  backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+}
+.brand{
+  font-weight:800; font-size:19px; letter-spacing:-0.02em; display:flex; align-items:center; gap:8px; margin-right:8px;
+}
+.brand .dot{color:var(--accent);}
+.tabs{display:flex; gap:4px; flex:1; overflow-x:auto; scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  white-space:nowrap;
+  padding:9px 14px; border-radius:10px; border:1px solid transparent;
+  background:transparent; color:var(--text-dim); font-size:14px; font-weight:600;
+  cursor:pointer; transition:all .15s ease;
+}
+.tab-btn:hover{color:var(--text); background:var(--panel-border);}
+.tab-btn.active{color:var(--text); background:var(--accent); color:white;}
+.subtab-btn{
+  white-space:nowrap;
+  padding:8px 14px; border-radius:9px; border:1px solid var(--panel-border);
+  background:transparent; color:var(--text-dim); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .15s ease;
+}
+.subtab-btn:hover{color:var(--text); background:var(--panel-border);}
+.subtab-btn.active{color:#fff; background:var(--accent); border-color:var(--accent);}
+.icon-btn{
+  width:38px;height:38px;border-radius:10px;border:1px solid var(--panel-border);
+  background:transparent; color:var(--text); font-size:16px; cursor:pointer;
+  display:flex;align-items:center;justify-content:center; transition:all .15s ease; flex-shrink:0;
+}
+.icon-btn:hover{background:var(--panel-border);}
+
+/* ---------- Layout ---------- */
+.app{max-width:1500px; margin:0 auto; padding:22px 18px 80px;}
+.view{display:none;}
+.view.active{display:block;}
+
+.editor-grid{
+  display:grid; grid-template-columns: minmax(340px, 560px) minmax(0, 1fr); gap:22px; align-items:start;
+}
+@media (max-width: 980px){
+  .editor-grid{grid-template-columns:minmax(0,1fr);}
+}
+
+.panel{padding:0; overflow:hidden;}
+.panel + .panel{margin-top:16px;}
+
+.section-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; cursor:pointer; user-select:none;
+}
+.section-head h3{margin:0; font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:9px;}
+.section-num{
+  width:22px;height:22px;border-radius:7px;background:var(--accent);color:#fff;
+  font-size:11px; font-weight:800; display:flex;align-items:center;justify-content:center; flex-shrink:0;
+}
+.chev{transition:transform .2s ease; color:var(--text-faint); font-size:12px;}
+.section-head.collapsed .chev{transform:rotate(-90deg);}
+.section-body{padding:2px 18px 18px;}
+.section-body.hidden{display:none;}
+
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:12px; font-weight:600; color:var(--text-dim); margin-bottom:5px;}
+.hint{font-size:11px; color:var(--text-faint);}
+.field .hint{margin-top:4px;}
+.row{display:flex; gap:10px;}
+.row > *{min-width:0;}
+.row > .field{flex:1;}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],textarea,select{
+  width:100%; padding:9px 11px; border-radius:9px; border:1px solid var(--panel-border);
+  background:var(--bg-soft); color:var(--text); font-size:13.5px; font-family:inherit;
+  transition:border-color .15s ease;
+}
+html.light input,html.light select,html.light textarea{background:#fff;}
+input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent);}
+textarea{resize:vertical; min-height:60px;}
+select{cursor:pointer;}
+
+.checkline{display:flex; align-items:center; gap:9px; font-size:13px; color:var(--text-dim); cursor:pointer; padding:6px 0;}
+.checkline input{width:16px;height:16px; accent-color:var(--accent); cursor:pointer;}
+
+.btn{
+  padding:9px 15px; border-radius:9px; border:1px solid var(--panel-border);
+  background:var(--bg-soft); color:var(--text); font-size:13px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .15s ease;
+}
+.btn:hover{border-color:var(--accent); color:var(--accent);}
+.btn-primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+.btn-primary:hover{filter:brightness(1.08); color:#fff;}
+.btn-sm{padding:6px 10px; font-size:12px; border-radius:7px;}
+.btn-ghost{background:transparent;}
+.btn-danger{color:var(--danger); border-color:transparent; background:transparent;}
+.btn-danger:hover{background:rgba(239,91,111,0.12); border-color:transparent;}
+.btn-block{width:100%; justify-content:center;}
+.btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+
+.pill{
+  font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:99px;
+  background:var(--panel-border); color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em;
+}
+.pill.blue{background:rgba(91,141,239,0.18); color:var(--accent);}
+.pill.green{background:rgba(62,207,142,0.18); color:var(--accent-2);}
+.pill.red{background:rgba(239,91,111,0.18); color:var(--danger);}
+.pill.gray{background:rgba(150,150,150,0.18); color:var(--text-dim);}
+
+/* item rows */
+.item-row{
+  border:1px solid var(--panel-border); border-radius:11px; padding:12px; margin-bottom:9px; background:var(--bg-soft);
+}
+html.light .item-row{background:#f7f9fc;}
+.item-row-top{display:flex; gap:8px; align-items:flex-start; min-width:0;}
+.item-row-top .grip{color:var(--text-faint); cursor:grab; padding-top:9px; font-size:13px;}
+.item-fields{flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;}
+.item-line2{display:grid; grid-template-columns: 1fr 90px 110px 90px auto; gap:8px; align-items:end;}
+@media (max-width:640px){.item-line2{grid-template-columns:1fr 1fr; }}
+
+/* ============================================================
+   MOBILE OPTIMIZATION (≤ 560px)
+   ============================================================ */
+@media (max-width:560px){
+  .app{padding:14px 12px 90px;}
+  .topbar{padding:10px 12px; gap:8px;}
+  .brand{font-size:16px; margin-right:2px;}
+  .icon-btn{width:34px; height:34px; font-size:14px;}
+  .tab-btn{padding:8px 11px; font-size:13px;}
+
+  /* Las filas de dos campos se apilan para no achicar selects/inputs de más */
+  .row{flex-direction:column; gap:12px;}
+  .row > .field{width:100%;}
+
+  /* Excepciones puntuales: filas cortas que sí entran bien lado a lado */
+  .row.row-compact{flex-direction:row; gap:8px;}
+
+  .item-line2{grid-template-columns:1fr 1fr; gap:10px 8px;}
+  .item-total{grid-column:1 / -1; text-align:left; padding-bottom:0; padding-top:2px; border-top:1px dashed var(--panel-border); margin-top:2px;}
+
+  .preview-toolbar{gap:6px;}
+  .preview-toolbar .btn:not(.btn-icon){flex:1 1 auto; justify-content:center; padding:10px 12px; font-size:12.5px;}
+  .preview-scroll{padding:10px; overflow-x:auto;}
+  /* OJO: #pdf-preview y sus clases pv-* NO se tocan acá a propósito.
+     Ese es el documento que se exporta a PDF/PNG con html2canvas, y tiene
+     que verse siempre igual sin importar desde qué dispositivo se genera.
+     En el celular se ve en su tamaño real con scroll/zoom horizontal
+     en vez de achicarse, para no exportar un PDF con un diseño distinto. */
+
+  .hist-grid{grid-template-columns:1fr;}
+  .mini-card{flex-wrap:wrap;}
+  .chooser-row{flex-direction:column;}
+
+  .modal{max-width:calc(100vw - 32px);}
+
+  /* Botones que se juntan en pantallas chicas: que se puedan tocar cómodo */
+  .btn{padding:10px 14px;}
+  .btn-sm{padding:8px 11px;}
+  input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],textarea,select{
+    padding:11px 12px; font-size:15px; /* evita el zoom automático de iOS al enfocar un input */
+  }
+}
+
+.item-line2 .field{margin-bottom:0;}
+.item-total{font-weight:700; font-size:13.5px; white-space:nowrap; padding-bottom:9px; text-align:right;}
+.item-actions{display:flex; gap:4px; padding-top:2px;}
+.section-title-row{
+  display:flex; align-items:center; gap:8px; padding:8px 4px; margin-bottom:9px; border-bottom:1px dashed var(--panel-border);
+}
+.section-title-row input{font-weight:700; border:none; background:transparent; padding:4px 2px; font-size:13.5px;}
+
+/* client/catalog cards */
+.chooser-row{display:flex; gap:8px; margin-bottom:10px;}
+.chooser-row select{flex:1;}
+.mini-list{display:flex; flex-direction:column; gap:8px;}
+.mini-card{
+  border:1px solid var(--panel-border); border-radius:10px; padding:10px 12px; background:var(--bg-soft);
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+}
+.mini-card-info{font-size:13px;}
+.mini-card-info b{display:block; font-size:13.5px;}
+.mini-card-info span{color:var(--text-dim); font-size:12px;}
+.star{cursor:pointer; color:var(--text-faint); font-size:15px;}
+.star.active{color:var(--warn);}
+
+/* swatches */
+.swatch-row{display:flex; gap:9px; flex-wrap:wrap;}
+.swatch{
+  width:30px;height:30px;border-radius:9px; cursor:pointer; border:2px solid transparent; transition:transform .1s ease;
+}
+.swatch.active{border-color:var(--text); transform:scale(1.08);}
+
+/* ---------- Preview ---------- */
+.preview-wrap{position:sticky; top:74px; min-width:0;}
+.preview-toolbar{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;}
+.btn-icon{
+  width:42px; height:42px; padding:0; font-size:19px; line-height:1;
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+}
+@media (max-width:560px){
+  .btn-icon{width:44px; height:44px; font-size:20px;}
+}
+.preview-scroll{
+  max-height:calc(100vh - 150px); overflow:auto; border-radius:var(--radius);
+  background:var(--bg-soft); padding:20px; border:1px solid var(--panel-border);
+}
+#pdf-preview{
+  background:#fff; color:#242b3d; width:800px; flex-shrink:0; margin:0 auto;
+  border-radius:3px; font-family:var(--pdf-font-body); box-shadow:0 18px 50px rgba(20,25,45,0.28);
+  font-size:12.5px; line-height:1.55; position:relative; overflow:hidden;
+  font-feature-settings:'tnum' 1, 'lnum' 1; font-variant-numeric:tabular-nums lining-nums;
+}
+/* En pantallas angostas el documento NO se achica (mantiene su ancho real de "hoja"
+   para que el PDF exportado se vea siempre igual); se ve con scroll horizontal. */
+.pv-spine{position:absolute; left:0; top:0; bottom:0; width:7px; background:var(--pdf-color);}
+.pv-body{padding:40px 44px 34px 50px;}
+#pdf-preview h1,#pdf-preview h2,#pdf-preview h3{margin:0; font-family:var(--pdf-font-display);}
+
+.pv-header{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:24px;
+  padding-bottom:22px; margin-bottom:22px; border-bottom:1.5px solid var(--pdf-tint-border);
+  position:relative;
+}
+.pv-logo{max-width:118px; max-height:72px; object-fit:contain; margin-bottom:8px;}
+.pv-biz-name{font-family:var(--pdf-font-display); font-size:23px; font-weight:700; color:#1c2130; letter-spacing:-0.01em; line-height:1.15;}
+.pv-biz-slogan{font-family:var(--pdf-font-display); font-style:italic; font-size:12px; color:var(--pdf-shade); margin-top:3px; font-weight:500;}
+.pv-biz-meta{font-size:10.8px; color:#6b7386; margin-top:9px; line-height:1.75;}
+.pv-doc-title{text-align:right; flex-shrink:0;}
+.pv-doc-title .t{
+  display:inline-block; font-family:var(--pdf-font-body); font-size:11px; font-weight:700; color:#fff;
+  background:var(--pdf-color); text-transform:uppercase; letter-spacing:.09em;
+  padding:6px 14px; border-radius:99px;
+}
+.pv-doc-title .n{font-family:var(--pdf-font-display); font-size:21px; font-weight:600; color:#1c2130; margin-top:10px; letter-spacing:-0.01em;}
+
+.pv-meta-grid{display:flex; justify-content:space-between; gap:24px; margin-bottom:22px; flex-wrap:wrap;}
+.pv-client-box{font-size:12px; line-height:1.75; max-width:60%;}
+.pv-client-box .label{font-size:9.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--pdf-color); font-weight:700; margin-bottom:6px;}
+.pv-client-box b{font-family:var(--pdf-font-display); font-size:14.5px; font-weight:600; color:#1c2130; display:block; margin-bottom:2px;}
+.pv-meta-box{font-size:11.5px; text-align:right; line-height:1.9; color:#5b6274;}
+.pv-meta-box .k{color:#9aa1b3; margin-right:6px;}
+
+/* Grilla de ítems armada con CSS Grid (divs) en vez de <table>/<td>: html2canvas
+   (la librería que rasteriza el documento para el PDF/PNG) usa su propio motor
+   de texto simplificado que no siempre respeta bien el ancho de columnas de una
+   tabla HTML real ni la fuente 'tabular-nums', lo que podía descuadrar los
+   números exportados aunque en pantalla se vieran perfectos. Con grid + una
+   fuente monoespaciada para los números (donde cada dígito mide exactamente lo
+   mismo) la alineación queda exacta también en el archivo exportado. */
+.pv-grid{display:grid; margin:4px 0 8px; border-radius:6px 6px 0 0; overflow:hidden;}
+.pv-grid .gcell{padding:10px 12px; border-bottom:1px solid #edeef3; font-size:12px; color:#333a4a;}
+.pv-grid .ghead{
+  font-size:9.5px; text-transform:uppercase; letter-spacing:.07em; color:#fff;
+  background:var(--pdf-color); padding:9px 12px; font-weight:700; border-bottom:none;
+}
+.pv-grid .ghead.num, .pv-grid .ghead.unit{text-align:right;}
+.pv-grid .ghead.unit{text-align:center;}
+.pv-grid .gcell.alt{background:var(--pdf-tint-2);}
+.pv-grid .gcell.num{
+  text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+/* "Cifras tabulares" manuales: cada dígito va en un span con ancho fijo en vez
+   de depender de font-variant-numeric:tabular-nums (que html2canvas, la
+   librería que rasteriza el documento a PDF/PNG, no siempre respeta). Así los
+   números quedan pixel-perfect alineados a la derecha en cualquier fila SIN
+   tener que cambiar de tipografía — el resto del carácter ($, ., espacio)
+   sigue con su ancho natural de la misma fuente del documento. */
+.tnum-d{display:inline-block; width:0.62em; text-align:center;}
+.pv-grid .gcell.unit{text-align:center; color:#5a6373;}
+.pv-grid .gcell.desc b{color:#1c2130; font-weight:600;}
+.pv-grid .gcell.section{
+  grid-column:1 / -1; background:var(--pdf-tint); font-family:var(--pdf-font-display); font-weight:600; color:var(--pdf-shade);
+  font-size:11.5px; letter-spacing:.02em; padding-top:12px; padding-bottom:8px; border-bottom:1px solid var(--pdf-tint-border-soft);
+}
+.pv-grid .gcell.empty{grid-column:1 / -1; text-align:center; color:#b0b5c2; padding:26px;}
+
+.pv-totals{display:flex; justify-content:flex-end; margin-top:14px;}
+.pv-totals-box{width:280px; font-size:12px; border-radius:8px; overflow:hidden; border:1px solid #eceef3;}
+.pv-totals-box .tline{display:flex; justify-content:space-between; padding:7px 14px; color:#5b6274;}
+.pv-totals-box .tline.total{
+  background:var(--pdf-tint); border-top:1.5px solid var(--pdf-tint-total-border);
+  margin-top:2px; padding:12px 14px; font-family:var(--pdf-font-display); font-size:18px; font-weight:600; color:var(--pdf-color);
+}
+.pv-totals-box .tline.seña{font-weight:700; color:#1c2130; background:#fafafc; border-top:1px dashed #e2e4ea;}
+
+.pv-notes{margin-top:26px; font-size:11px; color:#5b6274; display:grid; grid-template-columns:1fr 1fr; gap:14px 24px;}
+.pv-notes .blk{break-inside:avoid;}
+.pv-notes .blk.wide{grid-column:1 / -1;}
+.pv-notes .blk b{display:block; font-family:var(--pdf-font-display); color:var(--pdf-color); font-size:10.5px; font-weight:600; letter-spacing:.02em; margin-bottom:5px;}
+.pv-accounts{margin-top:18px; font-size:10.8px; color:#5b6274; border-top:1px solid #edeef3; padding-top:14px;}
+.pv-accounts b{font-family:var(--pdf-font-display); color:var(--pdf-color); display:block; margin-bottom:5px; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;}
+.pv-sign{margin-top:50px; display:flex; gap:60px;}
+.pv-sign .line{flex:1; border-top:1px solid #c3c7d2; padding-top:7px; font-size:10.5px; color:#8a91a3; text-align:center;}
+.pv-footer-stamp{margin-top:28px; padding-top:14px; border-top:1px solid #edeef3; text-align:center; font-size:9px; letter-spacing:.05em; color:#c1c5d0; text-transform:uppercase;}
+
+/* ---------- History / lists ---------- */
+.hist-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;}
+.hist-card{padding:16px; cursor:pointer; transition:transform .15s ease;}
+.hist-card:hover{transform:translateY(-2px);}
+.hist-card-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
+.hist-card-top b{font-size:15px;}
+.hist-card .client{font-size:13px; color:var(--text-dim); margin-bottom:10px;}
+.hist-card .amount{font-size:20px; font-weight:800;}
+.hist-card .date{font-size:11.5px; color:var(--text-faint); margin-top:6px;}
+.status-select{margin-top:10px;}
+.empty-state{text-align:center; padding:60px 20px; color:var(--text-dim);}
+.empty-state .big{font-size:38px; margin-bottom:10px;}
+
+.page-title{font-size:20px; font-weight:800; margin-bottom:4px;}
+.page-sub{font-size:13.5px; color:var(--text-dim); margin-bottom:20px;}
+
+/* ---------- Quick glance (resumen al abrir la app) ---------- */
+.quick-glance{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:20px;
+}
+@media (max-width:760px){ .quick-glance{grid-template-columns:1fr;} }
+.qg-card{
+  padding:16px 18px; cursor:pointer; transition:transform .15s ease, border-color .15s ease;
+  display:flex; flex-direction:column; gap:2px;
+}
+.qg-card:hover{transform:translateY(-2px); border-color:var(--accent);}
+.qg-card .qg-label{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); display:flex; align-items:center; gap:6px;}
+.qg-card .qg-value{font-size:26px; font-weight:800; line-height:1.25;}
+.qg-card .qg-sub{font-size:12px; color:var(--text-dim);}
+.qg-card.qg-warn .qg-value{color:var(--warn);}
+.qg-card.qg-accent .qg-value{color:var(--accent-2);}
+
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--panel-solid); color:var(--text); padding:12px 20px; border-radius:11px;
+  border:1px solid var(--panel-border); box-shadow:var(--shadow); font-size:13.5px; font-weight:600;
+  opacity:0; pointer-events:none; transition:all .25s ease; z-index:200; display:flex; align-items:center; gap:8px;
+  max-width:min(90vw, 420px); text-align:center; line-height:1.4;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+.modal-bg{
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px);
+  display:none; align-items:center; justify-content:center; z-index:150; padding:20px;
+}
+.modal-bg.show{display:flex;}
+.modal{max-width:420px; width:100%; padding:22px;}
+.modal h3{margin:0 0 14px;}
+
+.select-input{position:relative;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span>Presu<span class="dot">•</span>App</span></div>
+  <div class="tabs">
+    <button class="tab-btn active" data-view="editor">✨ Nuevo presupuesto</button>
+    <button class="tab-btn" data-view="historial">🗂 Historial</button>
+    <button class="tab-btn" data-view="clientes">👥 Clientes</button>
+    <button class="tab-btn" data-view="catalogo">📚 Catálogo</button>
+    <button class="tab-btn" data-view="cuentas">💳 Cuentas</button>
+    <button class="tab-btn" data-view="negocio">🏢 Mi negocio</button>
+  </div>
+  <button class="icon-btn" id="theme-toggle" title="Cambiar tema">◐</button>
+</div>
+
+<div class="app">
+  <!-- ============ EDITOR VIEW ============ -->
+  <div class="view active" id="view-editor">
+    <div class="quick-glance" id="quick-glance"></div>
+    <div class="editor-grid">
+      <div class="editor-col" id="editor-col"></div>
+      <div class="preview-wrap">
+        <div class="preview-toolbar">
+          <button class="btn btn-icon" id="btn-download" title="Descargar" aria-label="Descargar"><svg viewBox="0 0 16 16" width="19" height="19" fill="var(--accent)" xmlns="http://www.w3.org/2000/svg"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg></button>
+          <button class="btn btn-icon" id="btn-whatsapp" title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp"><svg viewBox="0 0 16 16" width="20" height="20" fill="#25D366" xmlns="http://www.w3.org/2000/svg"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.472.204.84.326 1.129.417.475.152.904.13 1.245.08.38-.058 1.17-.48 1.334-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg></button>
+          <button class="btn btn-icon" id="btn-email" title="Enviar por email" aria-label="Enviar por email"><svg viewBox="0 0 16 16" width="19" height="19" fill="#FF9F43" xmlns="http://www.w3.org/2000/svg"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/></svg></button>
+          <button class="btn btn-icon" id="btn-save" title="Guardar" aria-label="Guardar">💾</button>
+          <button class="btn btn-icon" id="btn-new" title="Nuevo presupuesto" aria-label="Nuevo presupuesto"><svg viewBox="0 0 16 16" width="19" height="19" fill="var(--text-dim)" xmlns="http://www.w3.org/2000/svg"><path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5"/><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/></svg></button>
+        </div>
+        <div class="preview-scroll">
+          <div id="pdf-preview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HISTORIAL VIEW ============ -->
+  <div class="view" id="view-historial">
+    <div class="page-title">Historial de presupuestos</div>
+    <div class="page-sub">Seguí el estado de cada presupuesto hasta que se cierre el trabajo.</div>
+    <div id="historial-list"></div>
+  </div>
+
+  <!-- ============ CLIENTES VIEW ============ -->
+  <div class="view" id="view-clientes">
+    <div class="page-title">Clientes guardados</div>
+    <div class="page-sub">Cargá los datos una vez y elegilos en cada presupuesto.</div>
+    <div class="glass panel" style="padding:18px; max-width:520px; margin-bottom:20px;">
+      <h3 style="margin:0 0 12px; font-size:14.5px;">＋ Nuevo cliente</h3>
+      <div id="client-form"></div>
+      <button class="btn btn-primary btn-block" id="btn-add-client">Guardar cliente</button>
+    </div>
+    <div class="mini-list" id="clients-list"></div>
+  </div>
+
+  <!-- ============ CATALOGO VIEW ============ -->
+  <div class="view" id="view-catalogo">
+    <div class="page-title">Catálogo de ítems</div>
+    <div class="page-sub">Guardá tus trabajos y precios frecuentes para agregarlos en segundos.</div>
+    <div class="tabs" style="flex:0; margin-bottom:16px; gap:6px;">
+      <button class="subtab-btn active" id="subtab-items" onclick="switchCatalogSubtab('items')">📦 Ítems sueltos</button>
+      <button class="subtab-btn" id="subtab-combos" onclick="switchCatalogSubtab('combos')">🧩 Combos</button>
+    </div>
+
+    <div id="catalog-subview-items">
+      <div class="glass panel" style="padding:16px 18px; max-width:520px; margin-bottom:20px; border-color:rgba(232,183,75,0.35);">
+        <h3 style="margin:0 0 6px; font-size:14.5px;">📈 Actualizar precios por variación mensual</h3>
+        <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">
+          Cada mes, AAIERIC publica el % de variación respecto al mes anterior (lo vas a ver arriba del PDF que te mandan, ej: "Variación con anterior: 2,10%"). Cargalo acá para actualizar tus precios de una sola vez.
+        </p>
+        <div id="price-increase-panel"></div>
+      </div>
+      <div class="glass panel" style="padding:16px 18px; max-width:520px; margin-bottom:20px; border-color:rgba(91,141,239,0.35);">
+        <h3 style="margin:0 0 6px; font-size:14.5px;">📥 Ítems base de AAIERIC</h3>
+        <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Cargá los 91 ítems de mano de obra con los precios sugeridos por AAIERIC (junio 2026). Después, usá el aumento por % de arriba para mantenerlos al día mes a mes.</p>
+        <div id="aaieric-import-panel"></div>
+      </div>
+      <div class="glass panel" style="padding:18px; max-width:520px; margin-bottom:20px;">
+        <h3 style="margin:0 0 12px; font-size:14.5px;">＋ Nuevo ítem</h3>
+        <div id="catalog-form"></div>
+        <button class="btn btn-primary btn-block" id="btn-add-catalog">Guardar en catálogo</button>
+      </div>
+      <div class="field" style="max-width:320px; margin-bottom:14px;">
+        <input type="text" id="catalog-search-input" placeholder="🔍 Buscar ítem...">
+      </div>
+      <div class="mini-list" id="catalog-list"></div>
+    </div>
+
+    <div id="catalog-subview-combos" style="display:none;">
+      <div class="glass panel" style="padding:18px; max-width:560px; margin-bottom:20px;">
+        <h3 style="margin:0 0 6px; font-size:14.5px;">🧩 Nuevo combo</h3>
+        <p style="font-size:12px; color:var(--text-dim); margin:0 0 12px;">Agrupá varios ítems que siempre cotizás juntos (ej. "Tablero completo") para sumarlos de una sola vez.</p>
+        <div id="combo-form"></div>
+      </div>
+      <div class="mini-list" id="combos-list"></div>
+    </div>
+  </div>
+
+  <!-- ============ CUENTAS VIEW ============ -->
+  <div class="view" id="view-cuentas">
+    <div class="page-title">Cuentas de cobro</div>
+    <div class="page-sub">Cargalas una vez; después elegís cuáles mostrar en cada presupuesto.</div>
+    <div class="glass panel" style="padding:18px; max-width:520px; margin-bottom:20px;">
+      <h3 style="margin:0 0 12px; font-size:14.5px;">＋ Nueva cuenta</h3>
+      <div id="account-form"></div>
+      <button class="btn btn-primary btn-block" id="btn-add-account">Guardar cuenta</button>
+    </div>
+    <div class="mini-list" id="accounts-list"></div>
+  </div>
+
+  <!-- ============ NEGOCIO VIEW ============ -->
+  <div class="view" id="view-negocio">
+    <div class="page-title">Mi negocio</div>
+    <div class="page-sub">Estos datos aparecen en todos tus presupuestos.</div>
+    <div class="glass panel" style="padding:18px; max-width:520px;">
+      <div id="business-form"></div>
+    </div>
+
+    <div class="glass panel" style="padding:18px; max-width:520px; margin-top:16px;">
+      <h3 style="margin:0 0 6px; font-size:14.5px;">💾 Backup y restauración</h3>
+      <div id="backup-reminder"></div>
+      <p style="font-size:12.5px; color:var(--text-dim); margin:0 0 14px;">
+        Todo se guarda solo en este navegador. Si limpiás el caché, cambiás de dispositivo o de navegador, lo perdés.
+        Descargá un backup de vez en cuando para no quedarte sin tus datos.
+      </p>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-primary" id="btn-export-backup">⬇️ Descargar backup</button>
+        <button class="btn" id="btn-import-backup">⬆️ Restaurar backup</button>
+        <input type="file" id="import-backup-input" accept="application/json,.json" style="display:none;">
+      </div>
+      <div class="hint" style="margin-top:10px;">El backup incluye tu negocio, clientes, catálogo, cuentas e historial de presupuestos, en un archivo .json.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="glass modal" id="modal-content"></div>
+</div>
+
+<script>
+/* ============================================================
+   PRESUPUESTOS APP — estado, storage y utilidades
+   ============================================================ */
+const LS_KEYS = {
+  business:'pa_business', clients:'pa_clients', catalog:'pa_catalog',
+  accounts:'pa_accounts', budgets:'pa_budgets', current:'pa_current', theme:'pa_theme',
+  combos:'pa_combos', snippets:'pa_snippets', counter:'pa_counter',
+  priceLog:'pa_price_log', lastBackupAt:'pa_last_backup_at'
+};
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function load(key, fallback){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } }
+function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){ console.error('storage error',e); } }
+
+let business = load(LS_KEYS.business, {
+  logo:null, signature:null, name:'', rubro:'', slogan:'', cuit:'', ivaCond:'no_mostrar',
+  address:'', phone:'', email:'', web:''
+});
+let clients   = load(LS_KEYS.clients, []);
+let catalog   = load(LS_KEYS.catalog, []);
+let accounts  = load(LS_KEYS.accounts, []);
+let budgets   = load(LS_KEYS.budgets, []);
+let combos    = load(LS_KEYS.combos, []);
+let priceIncreaseLog = load(LS_KEYS.priceLog, []); // historial de aumentos por % aplicados al catálogo
+let lastBackupAt = load(LS_KEYS.lastBackupAt, null); // fecha del último backup descargado o restaurado
+let snippets  = load(LS_KEYS.snippets, { paymentTerms:[], deliveryTerms:[], notes:[], termsConditions:[] });
+let numberCounter = load(LS_KEYS.counter, 0);
+
+// Safety net: if there are already-saved budgets whose numbers are higher than
+// our counter (e.g. from before this counter existed, or restored from an
+// older backup), bump the counter up so new numbers never repeat an old one.
+(function ensureCounterAheadOfExisting(){
+  let maxExisting = 0;
+  budgets.forEach(b=>{
+    const m = /(\d+)\s*$/.exec((b.number||'').trim());
+    if(m){ const n = parseInt(m[1], 10); if(!isNaN(n) && n > maxExisting) maxExisting = n; }
+  });
+  if(maxExisting > numberCounter){
+    numberCounter = maxExisting;
+    save(LS_KEYS.counter, numberCounter);
+  }
+})();
+
+function nextBudgetNumber(){
+  numberCounter += 1;
+  save(LS_KEYS.counter, numberCounter);
+  return 'P-' + String(numberCounter).padStart(4,'0');
+}
+
+function blankBudget(){
+  return {
+    id: uid(),
+    number: nextBudgetNumber(),
+    date: new Date().toISOString().slice(0,10),
+    validity: 15,
+    currency: 'ARS',
+    docTitle: 'Presupuesto',
+    pedidoMode: false,
+    ivaBreakdown: false,
+    includeProviderData: true,
+    clientId: null,
+    client: { name:'', cuitDni:'', phone:'', email:'', address:'' },
+    items: [],
+    globalDiscount: { type:'percent', value:0 },
+    surcharges: [],
+    deposit: { type:'percent', value:0 },
+    paymentTerms: '', deliveryTerms: '', notes: '', termsConditions: '',
+    includeSignature: false,
+    showCosts: false,
+    accountsShown: [],
+    design: { color:'#2a5bd7', font:'classica', showLogo:true, showUnitColumn:true },
+    status: 'draft',
+    createdAt: Date.now()
+  };
+}
+
+let current = load(LS_KEYS.current, null) || blankBudget();
+
+const CURRENCY_SYMS = { ARS:'$', USD:'US$', EUR:'€' };
+const IVA_RATES = [0, 10.5, 21, 27];
+const FONT_MAP = {
+  classica: { display:"'Fraunces', 'Georgia', serif", body:"'Inter', -apple-system, sans-serif" },
+  moderna:  { display:"'Space Grotesk', 'Helvetica Neue', sans-serif", body:"'Inter', -apple-system, sans-serif" },
+  elegante: { display:"'Playfair Display', 'Palatino Linotype', serif", body:"'Lora', Georgia, serif" }
+};
+const COLOR_SWATCHES = ['#2a5bd7','#1a8f5e','#c0392b','#8e44ad','#e07b28','#16697a','#2d2d2d','#c2185b'];
+
+/* Manual color mixing (replaces CSS color-mix(), which older versions of
+   html2canvas can't parse and would silently fail the whole PDF export on). */
+function hexToRgbArr(hex){
+  hex = (hex||'#2a5bd7').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16);
+  return [(num>>16)&255, (num>>8)&255, num&255];
+}
+function mixColors(hexA, hexB, weightAPercent){
+  const a = hexToRgbArr(hexA), b = hexToRgbArr(hexB);
+  const p = weightAPercent/100;
+  const r = Math.round(a[0]*p + b[0]*(1-p));
+  const g = Math.round(a[1]*p + b[1]*(1-p));
+  const bl = Math.round(a[2]*p + b[2]*(1-p));
+  return `rgb(${r}, ${g}, ${bl})`;
+}
+function applyBrandColorVars(color){
+  const root = document.documentElement.style;
+  root.setProperty('--pdf-color', color);
+  root.setProperty('--pdf-tint', mixColors(color, '#ffffff', 7));
+  root.setProperty('--pdf-tint-2', mixColors(color, '#ffffff', 4));
+  root.setProperty('--pdf-shade', mixColors(color, '#000000', 82));
+  root.setProperty('--pdf-tint-border', mixColors(color, '#d8dbe4', 30));
+  root.setProperty('--pdf-tint-border-soft', mixColors(color, '#e7e9f0', 18));
+  root.setProperty('--pdf-tint-total-border', mixColors(color, '#ffffff', 35));
+}
+
+function fmt(n, currency){
+  currency = currency || current.currency;
+  n = isFinite(n) ? n : 0;
+  try{
+    return new Intl.NumberFormat('es-AR', { style:'currency', currency: currency, minimumFractionDigits:0, maximumFractionDigits:0 }).format(n);
+  }catch(e){
+    return (CURRENCY_SYMS[currency]||'$') + ' ' + Math.round(n).toLocaleString('es-AR');
+  }
+}
+
+// Envuelve cada dígito de un string ya formateado (ej. "$ 36.456") en un span
+// de ancho fijo (ver .tnum-d en el CSS) para que el número quede perfecto al
+// exportar a PDF/PNG, sin necesitar una tipografía distinta al resto del doc.
+function tnum(str){
+  return String(str).replace(/[0-9]/g, d => `<span class="tnum-d">${d}</span>`);
+}
+// Atajo: formatea un monto Y lo prepara con dígitos de ancho fijo en un solo paso.
+function fmtT(n, currency){ return tnum(fmt(n, currency)); }
+
+function toast(msg, duration){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), duration || 2400);
+}
+
+function persistCurrent(){ save(LS_KEYS.current, current); }
+function persistAll(){
+  save(LS_KEYS.business, business); save(LS_KEYS.clients, clients);
+  save(LS_KEYS.catalog, catalog); save(LS_KEYS.accounts, accounts);
+  save(LS_KEYS.budgets, budgets); save(LS_KEYS.combos, combos);
+  save(LS_KEYS.snippets, snippets);
+  save(LS_KEYS.priceLog, priceIncreaseLog);
+}
+
+/* ============================================================
+   BACKUP: EXPORT / IMPORT
+   ============================================================ */
+function exportBackup(){
+  const payload = {
+    app: 'presu-app-backup',
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    business, clients, catalog, accounts, budgets, current, combos, snippets, numberCounter, priceIncreaseLog
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `presupuestos-backup-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  lastBackupAt = Date.now();
+  save(LS_KEYS.lastBackupAt, lastBackupAt);
+  renderBackupReminder();
+  toast('Backup descargado ✓');
+}
+
+function readBackupFile(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(e){ toast('Ese archivo no es un backup válido (JSON inválido)', 4000); return; }
+
+    if(!data || typeof data !== 'object' || !('business' in data) || !('budgets' in data)){
+      toast('Ese archivo no parece un backup de Presu•App', 4000);
+      return;
+    }
+
+    confirmModal(
+      'Restaurar backup',
+      'Esto va a reemplazar todos los datos guardados en este navegador (negocio, clientes, catálogo, cuentas e historial) por los del archivo. ¿Continuar?',
+      ()=>{
+        business = data.business || business;
+        clients  = Array.isArray(data.clients)  ? data.clients  : [];
+        catalog  = Array.isArray(data.catalog)  ? data.catalog  : [];
+        accounts = Array.isArray(data.accounts) ? data.accounts : [];
+        budgets  = Array.isArray(data.budgets)  ? data.budgets  : [];
+        combos   = Array.isArray(data.combos)   ? data.combos   : [];
+        priceIncreaseLog = Array.isArray(data.priceIncreaseLog) ? data.priceIncreaseLog : [];
+        snippets = data.snippets && typeof data.snippets==='object' ? data.snippets : { paymentTerms:[], deliveryTerms:[], notes:[], termsConditions:[] };
+        numberCounter = typeof data.numberCounter === 'number' ? data.numberCounter : 0;
+        let maxExisting = 0;
+        budgets.forEach(b=>{
+          const m = /(\d+)\s*$/.exec((b.number||'').trim());
+          if(m){ const n = parseInt(m[1], 10); if(!isNaN(n) && n > maxExisting) maxExisting = n; }
+        });
+        if(maxExisting > numberCounter) numberCounter = maxExisting;
+        save(LS_KEYS.counter, numberCounter);
+        current  = data.current && typeof data.current === 'object' ? data.current : blankBudget();
+        // normalize potentially missing fields on older backups
+        if(!current.items) current.items = [];
+        if(!current.client) current.client = { name:'', cuitDni:'', phone:'', email:'', address:'' };
+        if(!current.globalDiscount) current.globalDiscount = { type:'percent', value:0 };
+        if(!current.surcharges) current.surcharges = [];
+        if(!current.deposit) current.deposit = { type:'percent', value:0 };
+        if(!current.design) current.design = { color:'#2a5bd7', font:'classica', showLogo:true, showUnitColumn:true };
+        if(!current.accountsShown) current.accountsShown = [];
+        if(typeof current.showCosts !== 'boolean') current.showCosts = false;
+
+        lastBackupAt = Date.now();
+        save(LS_KEYS.lastBackupAt, lastBackupAt);
+
+        persistAll(); persistCurrent();
+        renderEditor(); renderPreview(); renderBusinessView();
+        toast('Backup restaurado ✓');
+      }
+    );
+  };
+  reader.onerror = ()=>toast('No se pudo leer el archivo', 4000);
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function initTheme(){
+  const t = load(LS_KEYS.theme, 'dark');
+  document.documentElement.classList.toggle('light', t === 'light');
+  document.getElementById('theme-toggle').textContent = t === 'light' ? '☾' : '◐';
+}
+document.getElementById('theme-toggle').addEventListener('click', ()=>{
+  const isLight = document.documentElement.classList.toggle('light');
+  save(LS_KEYS.theme, isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isLight ? '☾' : '◐';
+});
+initTheme();
+
+/* ============================================================
+   TABS / VIEW SWITCHING
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    if(btn.dataset.view==='historial') renderHistorial();
+    if(btn.dataset.view==='clientes') renderClientsView();
+    if(btn.dataset.view==='catalogo') renderCatalogView();
+    if(btn.dataset.view==='cuentas') renderAccountsView();
+    if(btn.dataset.view==='negocio') renderBusinessView();
+    if(btn.dataset.view==='editor') renderQuickGlance();
+  });
+});
+
+/* ============================================================
+   MODAL helper
+   ============================================================ */
+function openModal(html){
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-bg').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', (e)=>{ if(e.target.id==='modal-bg') closeModal(); });
+
+function confirmModal(title, msg, onConfirm){
+  openModal(`
+    <h3>${title}</h3>
+    <p style="color:var(--text-dim); font-size:13.5px; margin-bottom:18px;">${msg}</p>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn" id="mc-cancel">Cancelar</button>
+      <button class="btn btn-danger" style="border:1px solid var(--danger);" id="mc-ok">Eliminar</button>
+    </div>
+  `);
+  document.getElementById('mc-cancel').onclick = closeModal;
+  document.getElementById('mc-ok').onclick = ()=>{ onConfirm(); closeModal(); };
+}
+
+/* ============================================================
+   FORM FIELD BUILDER (generic)
+   ============================================================ */
+function fieldHtml({label, id, type='text', value='', placeholder='', hint='', options=null, textarea=false}){
+  value = value===undefined||value===null ? '' : value;
+  let control;
+  if(options){
+    control = `<select id="${id}">` + options.map(o=>{
+      const v = typeof o==='object'?o.value:o;
+      const l = typeof o==='object'?o.label:o;
+      return `<option value="${v}" ${v===value?'selected':''}>${l}</option>`;
+    }).join('') + `</select>`;
+  } else if(textarea){
+    control = `<textarea id="${id}" placeholder="${placeholder}">${value}</textarea>`;
+  } else {
+    control = `<input type="${type}" id="${id}" value="${value}" placeholder="${placeholder}">`;
+  }
+  return `<div class="field"><label>${label}</label>${control}${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+}
+
+/* ============================================================
+   SNIPPETS — reusable text templates (forma de pago, notas, etc.)
+   ============================================================ */
+const SNIPPET_DOM_MAP = { paymentTerms:'f-paymentterms', deliveryTerms:'f-deliveryterms', notes:'f-notes', termsConditions:'f-terms' };
+function snippetFieldBlock(fieldKey, label, id, value, placeholder, isTextarea){
+  value = value===undefined||value===null ? '' : value;
+  const opts = (snippets[fieldKey]||[]).map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  const control = isTextarea
+    ? `<textarea id="${id}" placeholder="${placeholder}">${value}</textarea>`
+    : `<input type="text" id="${id}" value="${value}" placeholder="${placeholder}">`;
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <div class="row" style="gap:6px; margin-bottom:6px;">
+        <select id="snip-select-${fieldKey}" style="flex:1; font-size:12px; padding:6px 8px;">
+          <option value="">📋 Usar plantilla guardada...</option>${opts}
+        </select>
+        <button class="btn btn-sm" type="button" title="Guardar texto actual como plantilla" onclick="saveSnippet('${fieldKey}')">💾</button>
+        <button class="btn btn-sm btn-danger" type="button" title="Borrar la plantilla elegida" onclick="deleteCurrentSnippet('${fieldKey}')">🗑</button>
+      </div>
+      ${control}
+    </div>`;
+}
+function refreshSnippetSelect(fieldKey){
+  const sel = document.getElementById('snip-select-'+fieldKey);
+  if(!sel) return;
+  const opts = (snippets[fieldKey]||[]).map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  sel.innerHTML = `<option value="">📋 Usar plantilla guardada...</option>${opts}`;
+}
+function saveSnippet(fieldKey){
+  const domId = SNIPPET_DOM_MAP[fieldKey];
+  const el = document.getElementById(domId);
+  const val = el ? el.value.trim() : '';
+  if(!val){ toast('Escribí un texto antes de guardarlo como plantilla'); return; }
+  const label = window.prompt('¿Cómo querés llamar a esta plantilla?', val.slice(0,30));
+  if(!label) return;
+  if(!snippets[fieldKey]) snippets[fieldKey] = [];
+  snippets[fieldKey].push({ id:uid(), label, text:val });
+  persistAll();
+  refreshSnippetSelect(fieldKey);
+  toast('Plantilla guardada');
+}
+function applySnippet(fieldKey, snippetId){
+  if(!snippetId) return;
+  const s = (snippets[fieldKey]||[]).find(x=>x.id===snippetId); if(!s) return;
+  const domId = SNIPPET_DOM_MAP[fieldKey];
+  const el = document.getElementById(domId);
+  if(!el) return;
+  el.value = s.text;
+  el.dispatchEvent(new Event('input', { bubbles:true }));
+}
+function deleteCurrentSnippet(fieldKey){
+  const sel = document.getElementById('snip-select-'+fieldKey);
+  if(!sel || !sel.value){ toast('Elegí una plantilla del desplegable para borrarla'); return; }
+  const id = sel.value;
+  confirmModal('Eliminar plantilla', '¿Eliminar esta plantilla guardada?', ()=>{
+    snippets[fieldKey] = (snippets[fieldKey]||[]).filter(x=>x.id!==id);
+    persistAll();
+    refreshSnippetSelect(fieldKey);
+  });
+}
+
+/* ============================================================
+   RECORDATORIO DE BACKUP
+   ============================================================ */
+function renderBackupReminder(){
+  const el = document.getElementById('backup-reminder');
+  if(!el) return;
+  const hasData = !!(business.name || clients.length || catalog.length || budgets.length || accounts.length);
+  if(!hasData){ el.innerHTML = ''; return; }
+
+  const never = lastBackupAt === null;
+  const days = never ? null : daysSince(lastBackupAt);
+  const stale = never || days > 14;
+  if(!stale){ el.innerHTML = ''; return; }
+
+  const msg = never
+    ? 'Todavía no descargaste ningún backup. Hacé uno para no perder tus datos si limpiás el caché o cambiás de dispositivo.'
+    : `Pasaron ${days} días desde tu último backup. Convendría descargar uno actualizado.`;
+
+  el.innerHTML = `
+    <div class="glass" style="padding:10px 12px; margin-bottom:14px; border-color:rgba(232,183,75,0.5); background:rgba(232,183,75,0.08);">
+      <div style="font-size:12.5px; font-weight:700; color:var(--warn);">💾 Recordatorio de backup</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:2px;">${msg}</div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   MI NEGOCIO VIEW
+   ============================================================ */
+function renderBusinessView(){
+  renderBackupReminder();
+  const el = document.getElementById('business-form');
+  el.innerHTML = `
+    <div class="field">
+      <label>Logo</label>
+      <div style="display:flex; align-items:center; gap:12px;">
+        ${business.logo ? `<img src="${business.logo}" style="width:60px;height:60px;object-fit:contain;border-radius:9px;border:1px solid var(--panel-border);background:#fff;">` : `<div style="width:60px;height:60px;border-radius:9px;border:1px dashed var(--panel-border);display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;text-align:center;">Sin logo</div>`}
+        <div>
+          <input type="file" accept="image/png,image/jpeg" id="biz-logo-input" style="display:none;">
+          <button class="btn btn-sm" id="biz-logo-btn">Subir logo</button>
+          ${business.logo ? `<button class="btn btn-sm btn-danger" id="biz-logo-remove">Quitar</button>` : ''}
+        </div>
+      </div>
+      <div class="hint">PNG o JPG. Queda guardado para tus próximos presupuestos.</div>
+    </div>
+    <div class="field">
+      <label>Firma / sello (opcional)</label>
+      <div style="display:flex; align-items:center; gap:12px;">
+        ${business.signature ? `<img src="${business.signature}" style="width:100px;height:56px;object-fit:contain;border-radius:9px;border:1px solid var(--panel-border);background:#fff;">` : `<div style="width:100px;height:56px;border-radius:9px;border:1px dashed var(--panel-border);display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;text-align:center;">Sin firma</div>`}
+        <div>
+          <input type="file" accept="image/png,image/jpeg" id="biz-sign-input" style="display:none;">
+          <button class="btn btn-sm" id="biz-sign-btn">Subir imagen</button>
+          ${business.signature ? `<button class="btn btn-sm btn-danger" id="biz-sign-remove">Quitar</button>` : ''}
+        </div>
+      </div>
+      <div class="hint">Se muestra en el documento cuando activás "Incluir línea de firma" en un presupuesto. Usá una foto de tu firma sobre fondo blanco/transparente.</div>
+    </div>
+    ${fieldHtml({label:'Nombre / Razón social', id:'biz-name', value:business.name})}
+    ${fieldHtml({label:'Rubro / Profesión', id:'biz-rubro', value:business.rubro, placeholder:'Ej: Electricista, Diseño gráfico, Construcción...'})}
+    ${fieldHtml({label:'Slogan (opcional)', id:'biz-slogan', value:business.slogan})}
+    <div class="row">
+      ${fieldHtml({label:'CUIT / CUIL', id:'biz-cuit', value:business.cuit})}
+    </div>
+    ${fieldHtml({label:'Condición frente al IVA', id:'biz-ivacond', options:[
+      {value:'no_mostrar', label:'— No mostrar —'},
+      {value:'ri', label:'Responsable Inscripto'},
+      {value:'mono', label:'Monotributista'},
+      {value:'exento', label:'Exento'},
+      {value:'cf', label:'Consumidor Final'}
+    ], value:business.ivaCond})}
+    ${fieldHtml({label:'Dirección', id:'biz-address', value:business.address})}
+    <div class="row">
+      ${fieldHtml({label:'Teléfono / WhatsApp', id:'biz-phone', value:business.phone, placeholder:'Ej: 5491122334455'})}
+      ${fieldHtml({label:'Email', id:'biz-email', value:business.email})}
+    </div>
+    ${fieldHtml({label:'Web / Instagram', id:'biz-web', value:business.web})}
+    <div class="hint" style="margin-top:6px;">✓ Estos datos se guardan automáticamente en este dispositivo.</div>
+  `;
+  const ids = ['name','rubro','slogan','cuit','ivacond','address','phone','email','web'];
+  ids.forEach(k=>{
+    const domId = 'biz-'+k;
+    const propKey = k==='ivacond' ? 'ivaCond' : k;
+    document.getElementById(domId).addEventListener('input', ()=>{
+      business[propKey] = document.getElementById(domId).value;
+      persistAll(); renderPreview();
+    });
+  });
+  document.getElementById('biz-logo-btn').addEventListener('click', ()=>document.getElementById('biz-logo-input').click());
+  document.getElementById('biz-logo-input').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ business.logo = reader.result; persistAll(); renderBusinessView(); renderPreview(); };
+    reader.readAsDataURL(file);
+  });
+  const rm = document.getElementById('biz-logo-remove');
+  if(rm) rm.addEventListener('click', ()=>{ business.logo=null; persistAll(); renderBusinessView(); renderPreview(); });
+
+  document.getElementById('biz-sign-btn').addEventListener('click', ()=>document.getElementById('biz-sign-input').click());
+  document.getElementById('biz-sign-input').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ business.signature = reader.result; persistAll(); renderBusinessView(); renderPreview(); };
+    reader.readAsDataURL(file);
+  });
+  const rmSign = document.getElementById('biz-sign-remove');
+  if(rmSign) rmSign.addEventListener('click', ()=>{ business.signature=null; persistAll(); renderBusinessView(); renderPreview(); });
+}
+
+/* ============================================================
+   CLIENTES VIEW
+   ============================================================ */
+function clientFormFields(prefix, data){
+  data = data || {};
+  return `
+    ${fieldHtml({label:'Nombre / Empresa', id:prefix+'-name', value:data.name})}
+    <div class="row">
+      ${fieldHtml({label:'CUIT / DNI (opcional)', id:prefix+'-doc', value:data.doc})}
+      ${fieldHtml({label:'Teléfono', id:prefix+'-phone', value:data.phone})}
+    </div>
+    ${fieldHtml({label:'Email', id:prefix+'-email', value:data.email})}
+    ${fieldHtml({label:'Dirección / Obra', id:prefix+'-address', value:data.address})}
+  `;
+}
+function renderClientsView(){
+  document.getElementById('client-form').innerHTML = clientFormFields('nc');
+  const list = document.getElementById('clients-list');
+  if(clients.length===0){
+    list.innerHTML = `<div class="empty-state"><div class="big">👥</div>Todavía no guardaste clientes.</div>`;
+    return;
+  }
+  list.innerHTML = clients.map(c=>`
+    <div class="mini-card">
+      <div class="mini-card-info"><b>${c.name||'(sin nombre)'}</b><span>${[c.doc,c.phone,c.email].filter(Boolean).join(' · ')}</span></div>
+      <div class="btn-row" style="margin:0;">
+        <button class="btn btn-sm" onclick="useClientInBudget('${c.id}')">Usar</button>
+        <button class="btn btn-sm btn-icon" style="width:32px;height:32px;" title="Editar cliente" onclick="editClient('${c.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+document.getElementById('btn-add-client').addEventListener('click', ()=>{
+  const name = document.getElementById('nc-name').value.trim();
+  if(!name){ toast('Poné al menos un nombre'); return; }
+  clients.push({
+    id: uid(), name,
+    doc: document.getElementById('nc-doc').value.trim(),
+    phone: document.getElementById('nc-phone').value.trim(),
+    email: document.getElementById('nc-email').value.trim(),
+    address: document.getElementById('nc-address').value.trim()
+  });
+  persistAll(); renderClientsView(); toast('Cliente guardado');
+});
+function deleteClient(id){
+  confirmModal('Eliminar cliente', '¿Seguro que querés eliminar este cliente guardado?', ()=>{
+    clients = clients.filter(c=>c.id!==id); persistAll(); renderClientsView();
+  });
+}
+function editClient(id){
+  const c = clients.find(x=>x.id===id); if(!c) return;
+  openModal(`
+    <h3>Editar cliente</h3>
+    ${clientFormFields('ec', c)}
+    <div class="btn-row" style="justify-content:flex-end; margin-top:6px;">
+      <button class="btn" id="ec-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="ec-save">Guardar cambios</button>
+    </div>
+  `);
+  document.getElementById('ec-cancel').onclick = closeModal;
+  document.getElementById('ec-save').onclick = ()=>{
+    const name = document.getElementById('ec-name').value.trim();
+    if(!name){ toast('Poné al menos un nombre'); return; }
+    c.name = name;
+    c.doc = document.getElementById('ec-doc').value.trim();
+    c.phone = document.getElementById('ec-phone').value.trim();
+    c.email = document.getElementById('ec-email').value.trim();
+    c.address = document.getElementById('ec-address').value.trim();
+    // Si este cliente ya estaba cargado en el presupuesto actual, actualizamos
+    // también esos datos para que no queden desincronizados.
+    if(current.clientId === c.id){
+      current.client = { name:c.name, cuitDni:c.doc, phone:c.phone, email:c.email, address:c.address };
+      persistCurrent();
+    }
+    persistAll();
+    closeModal();
+    renderClientsView();
+    toast('Cliente actualizado');
+  };
+}
+function useClientInBudget(id){
+  const c = clients.find(x=>x.id===id); if(!c) return;
+  current.clientId = c.id;
+  current.client = { name:c.name, cuitDni:c.doc, phone:c.phone, email:c.email, address:c.address };
+  persistCurrent();
+  document.querySelector('.tab-btn[data-view="editor"]').click();
+  renderEditor(); renderPreview();
+  toast('Cliente cargado en el presupuesto');
+}
+
+/* ============================================================
+   CATALOGO VIEW
+   ============================================================ */
+let aaiericSelectedVersion = null;
+let aaiericUpdateExisting = false;
+function renderAAIERICPanel(){
+  const el = document.getElementById('aaieric-import-panel');
+  if(!el) return;
+  const base = AAIERIC_TARIFFS[0];
+  el.innerHTML = `
+    <label class="checkline" style="margin-bottom:10px;">
+      <input type="checkbox" id="aaieric-update-existing" ${aaiericUpdateExisting?'checked':''}>
+      Actualizar precios de los ítems que ya tengo con el mismo nombre
+    </label>
+    <button class="btn btn-primary" id="btn-import-aaieric">📥 Importar / actualizar ${base.items.length} ítems base</button>
+  `;
+  document.getElementById('aaieric-update-existing').addEventListener('change', (e)=>{ aaiericUpdateExisting = e.target.checked; });
+  document.getElementById('btn-import-aaieric').addEventListener('click', importAAIERIC);
+}
+
+function renderCatalogView(){
+  renderAAIERICPanel();
+  renderPriceIncreasePanel();
+  document.getElementById('catalog-form').innerHTML = `
+    ${fieldHtml({label:'Descripción', id:'nk-desc', placeholder:'Ej: Instalación de boca eléctrica'})}
+    <div class="row">
+      ${fieldHtml({label:'Unidad', id:'nk-unit', placeholder:'Ej: unidad, m, hora'})}
+      ${fieldHtml({label:'Precio', id:'nk-price', type:'number'})}
+    </div>
+  `;
+  const list = document.getElementById('catalog-list');
+  const q = catalogSearch.trim().toLowerCase();
+  if(catalog.length===0){
+    list.innerHTML = `<div class="empty-state"><div class="big">📚</div>Todavía no guardaste ítems en tu catálogo.</div>`;
+  } else {
+    let filtered = catalog.filter(k=> !q || k.desc.toLowerCase().includes(q));
+    const sorted = filtered.sort((a,b)=>(b.favorite?1:0)-(a.favorite?1:0));
+    list.innerHTML = sorted.length ? sorted.map(k=>`
+      <div class="mini-card">
+        <span class="star ${k.favorite?'active':''}" onclick="toggleFavorite('${k.id}')">★</span>
+        <div class="mini-card-info" style="flex:1;"><b>${k.desc}</b><span>${k.unit||'unidad'} · ${fmt(k.price,'ARS')}</span></div>
+        <div class="btn-row" style="margin:0;">
+          <button class="btn btn-sm" onclick="addCatalogItemToBudget('${k.id}')">＋ Agregar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCatalogItem('${k.id}')">✕</button>
+        </div>
+      </div>
+    `).join('') : `<div class="empty-state">No hay ítems que coincidan con "${catalogSearch}".</div>`;
+  }
+  const searchInput = document.getElementById('catalog-search-input');
+  if(searchInput){
+    searchInput.value = catalogSearch;
+    searchInput.addEventListener('input', ()=>{
+      catalogSearch = searchInput.value;
+      const pos = searchInput.selectionStart;
+      renderCatalogView();
+      const ni = document.getElementById('catalog-search-input');
+      ni.focus(); ni.setSelectionRange(pos,pos);
+    });
+  }
+}
+document.getElementById('btn-add-catalog').addEventListener('click', ()=>{
+  const desc = document.getElementById('nk-desc').value.trim();
+  if(!desc){ toast('Poné una descripción'); return; }
+  catalog.push({
+    id: uid(), desc,
+    unit: document.getElementById('nk-unit').value.trim() || 'unidad',
+    price: parseFloat(document.getElementById('nk-price').value) || 0,
+    favorite: false
+  });
+  persistAll(); renderCatalogView(); toast('Ítem guardado en catálogo');
+});
+function toggleFavorite(id){
+  const k = catalog.find(x=>x.id===id); if(k){ k.favorite=!k.favorite; persistAll(); renderCatalogView(); }
+}
+function deleteCatalogItem(id){
+  confirmModal('Eliminar ítem', '¿Eliminar este ítem del catálogo?', ()=>{
+    catalog = catalog.filter(k=>k.id!==id); persistAll(); renderCatalogView();
+  });
+}
+function addCatalogItemToBudget(id){
+  const k = catalog.find(x=>x.id===id); if(!k) return;
+  current.items.push({ id:uid(), kind:'item', desc:k.desc, unit:k.unit, qty:1, price:k.price, ivaRate:21 });
+  persistCurrent();
+  document.querySelector('.tab-btn[data-view="editor"]').click();
+  renderEditor(); renderPreview();
+  toast('Ítem agregado al presupuesto');
+}
+
+/* ============================================================
+   CATALOGO — subtabs (Ítems sueltos / Combos)
+   ============================================================ */
+/* ============================================================
+   IMPORTADOR AAIERIC — Costos Sugeridos de Mano de Obra
+   Cada entrada es una versión mensual publicada por AAIERIC.
+   Para sumar una nueva (ej: julio 2026), agregar otro objeto al
+   array AAIERIC_TARIFFS con su propio id/label/items.
+   [descripción, unidad, precio ARS]
+   ============================================================ */
+const AAIERIC_TARIFFS = [
+  {
+    id: 'jun-2026',
+    label: 'Junio 2026',
+    items: [
+  // Obra completa - Refacción - Ampliación
+  ['Visita: inspección ocular, evaluación, diagnóstico, asesoramiento y presupuesto', 'visita', 53297],
+  ['Urgencia: lunes a sábado desde 20:00 hs / domingo y feriado (mínimo)', 'servicio', 127775],
+  ['Boca completa (unidad básica de cotización, hasta 5m de cañería)', 'boca', 106409],
+  ['Service - instalación (mínimo)', 'servicio', 106409],
+  ['Hora de trabajo (mínimo)', 'hora', 53297],
+  ['Hora de trabajo (promedio)', 'hora', 53297],
+  // Canalización de cañería en losa
+  ['Canalización en losa con caño metálico', 'boca', 53870],
+  ['Canalización en loseta con caño metálico', 'boca', 56562],
+  // Amurado de cañería en mampostería
+  ['Amurado de cañería en mampostería - ladrillo común', 'boca', 61219],
+  ['Amurado de cañería en mampostería - ladrillo hueco', 'boca', 59764],
+  ['Amurado de cañería en mampostería, por metro - ladrillo común', 'metro', 14631],
+  ['Amurado de cañería en mampostería, por metro - ladrillo hueco', 'metro', 14345],
+  // Amurado a la vista
+  ['Amurado de cañería a la vista (metal, PVC, cablecanal 14x30)', 'boca', 48931],
+  // Pase de viga/columna
+  ['Pase de cañería en viga y/o columna', 'boca', 56818],
+  // Cable subterráneo
+  ['Cable subterráneo (tierra)', 'boca', 53248],
+  ['Cable subterráneo (piso)', 'boca', 56818],
+  ['Cable subterráneo - adicional por caja de paso (tierra)', 'unidad', 58476],
+  ['Cable subterráneo - adicional por caja de paso (piso)', 'unidad', 62442],
+  // Cableado
+  ['Cableado obra nueva - canalización propia (opción 1)', 'boca', 26183],
+  ['Cableado obra nueva - canalización de otro profesional (opción 2)', 'boca', 36456],
+  ['Recableado con artefactos', 'boca', 54668],
+  ['Recableado sin artefactos', 'boca', 36456],
+  // Conexión de puntos y tomas
+  ['Conexión de punto, toma simple o portalámpara', 'boca', 19002],
+  ['Conexión de toma doble', 'boca', 24068],
+  ['Conexión de punto combinación', 'boca', 20453],
+  // Tableros monofásicos
+  ['Tablero principal monofásico con 1 ID y 1 TM + PAT', 'unidad', 314338],
+  ['Solo PAT (puesta a tierra)', 'unidad', 159553],
+  // Tableros trifásicos
+  ['Tablero principal trifásico con 1 ID y 1 TM + PAT', 'unidad', 425672],
+  ['ID, ITM u otro módulo bipolar adicional', 'unidad', 77286],
+  ['ID tetrapolar', 'unidad', 133052],
+  ['ITM tetrapolar', 'unidad', 133052],
+  ['ITM tripolar', 'unidad', 112248],
+  // Tableros seccionales
+  ['Tablero seccional hasta 8 polos', 'unidad', 223407],
+  ['Tablero seccional de 8 a 36 polos', 'unidad', 893738],
+  ['Tablero seccional de 36 a 54 polos', 'unidad', 1340546],
+  // Artefactos de iluminación
+  ['Artefacto aplique simple', 'unidad', 29161],
+  ['Spot LED', 'unidad', 29161],
+  ['Artefacto colgante liviano 3 luces, 1 efecto', 'unidad', 58323],
+  ['Artefacto colgante liviano 5 luces, 1 efecto', 'unidad', 77262],
+  ['Artefacto colgante - adicional por efecto', 'unidad', 19002],
+  ['Artefacto colgante pesado (mínimo)', 'unidad', 102039],
+  ['Equipo de tubo LED simple 7W a 36W', 'unidad', 58323],
+  ['Equipo de tubo LED doble 7W a 36W', 'unidad', 71795],
+  ['Equipo de tubo LED 45W', 'unidad', 72933],
+  ['Equipo de tubo LED doble 45W', 'unidad', 90505],
+  ['Ventilador de techo', 'unidad', 106409],
+  ['Ventilador de techo con luminaria, 1 efecto', 'unidad', 133052],
+  // Acometida
+  ['Acometida - gabinete 1 medidor monofásico', 'unidad', 223407],
+  ['Acometida - gabinete 2 medidores monofásicos', 'unidad', 319274],
+  ['Acometida - gabinete 3 medidores monofásicos', 'unidad', 744836],
+  ['Acometida - gabinete 4 medidores monofásicos', 'unidad', 851232],
+  ['PAT de servicio (jabalina + caja de inspección)', 'unidad', 159553],
+  ['Pilar completo (gabinete, TP, caño y PAT)', 'unidad', 877778],
+  ['Caño de acometida (amurado y conexión)', 'unidad', 223407],
+  ['Caja de toma (fusilera NH 00)', 'unidad', 319274],
+  ['Agregado de gabinete de medidor + TP', 'unidad', 319274],
+  // Bandejas portacables
+  ['Bandeja portacables hasta 150mm - metro lineal (hasta 3m alto)', 'metro', 12918],
+  ['Bandeja portacables hasta 150mm - metro lineal (más de 3m alto)', 'metro', 16158],
+  ['Bandeja portacables hasta 150mm - accesorio, curva o unión T (hasta 3m)', 'unidad', 17249],
+  ['Bandeja portacables hasta 150mm - accesorio, curva o unión T (más de 3m)', 'unidad', 20405],
+  ['Bandeja portacables 200/300mm - metro lineal (hasta 3m alto)', 'metro', 19365],
+  ['Bandeja portacables 200/300mm - metro lineal (más de 3m alto)', 'metro', 16582],
+  ['Bandeja portacables 200/300mm - accesorio, curva o unión T (hasta 3m)', 'unidad', 25864],
+  ['Bandeja portacables 200/300mm - accesorio, curva o unión T (más de 3m)', 'unidad', 24975],
+  ['Bandeja portacables 450/600mm - metro lineal (hasta 3m alto)', 'metro', 26476],
+  ['Bandeja portacables 450/600mm - metro lineal (más de 3m alto)', 'metro', 23138],
+  ['Bandeja portacables 450/600mm - accesorio, curva o unión T (hasta 3m)', 'unidad', 38689],
+  ['Bandeja portacables 450/600mm - accesorio, curva o unión T (más de 3m)', 'unidad', 34577],
+  // Emergencia / Corrección / Grupos electrógenos
+  ['Emergencia/urgencia - atención inmediata (lun a sáb 8 a 20hs)', 'unidad', 106409],
+  ['Corrección de factor de potencia monofásico, por kVA', 'kVA', 138246],
+  ['Grupo electrógeno monofásico hasta 3,5kVA', 'unidad', 266067],
+  // Automatismos
+  ['Contactor', 'unidad', 133052],
+  ['Sensor (sin costo de cableado)', 'unidad', 117051],
+  // Documentación
+  ['Proyecto eléctrico, mínimo por m² (mín. 30m²)', 'm²', 15604],
+  ['Proyecto eléctrico, mínimo del proyecto', 'proyecto', 541880],
+  ['Plano eléctrico, mínimo por m² (mín. 30m²)', 'm²', 14406],
+  ['Plano eléctrico, por boca', 'boca', 12465],
+  ['Plano eléctrico, por tablero', 'unidad', 31833],
+  ['Plano eléctrico, por acometida', 'unidad', 31833],
+  ['Lista de materiales, mínimo (30m²)', 'proyecto', 63774],
+  // Jornales
+  ['Jornal oficial especializado (8hs)', 'jornal', 48591],
+  ['Jornal oficial electricista (8hs)', 'jornal', 41564],
+  ['Jornal medio oficial electricista (8hs)', 'jornal', 38410],
+  ['Jornal ayudante (8hs)', 'jornal', 35355],
+  // Certificados
+  ['Certificado DCI-CAIE T1 residencial/comercial monofásico', 'unidad', 397544],
+  ['Certificado DCI-CAIE T1 residencial trifásico', 'unidad', 597892],
+  ['Certificado DCI-CAIE T1 comercial trifásico', 'unidad', 597892],
+  ['Certificado DCI-CAIE T2 (según potencia instalada)', 'unidad', 31185],
+  ['Certificado DCI-CAIE T3 (según potencia instalada)', 'unidad', 31185],
+  ['Protocolo puesta a tierra SRT900/15 - residencial/comercial', 'unidad', 636070],
+  ['Protocolo puesta a tierra SRT900/15 - industrial', 'unidad', 636070],
+    ]
+  },
+];
+
+// Si es la primera vez que se abre la app en este navegador (nunca se guardó
+// nada en el catálogo todavía), precargamos los 91 ítems base de AAIERIC
+// automáticamente — así cualquier electricista arranca con algo útil desde
+// el primer momento, sin tener que importar nada a mano. Si el catálogo ya
+// existe (aunque esté vacío porque el usuario borró todo a propósito), no
+// tocamos nada.
+if(localStorage.getItem(LS_KEYS.catalog) === null){
+  catalog = AAIERIC_TARIFFS[0].items.map(([desc,unit,price])=>({
+    id: uid(), desc, unit, price, favorite:false, source:'aaieric'
+  }));
+  save(LS_KEYS.catalog, catalog);
+}
+
+/* ============================================================
+   ACTUALIZAR PRECIOS POR % (variación mensual AAIERIC u otra)
+   ============================================================ */
+let priceIncreaseScope = 'all'; // 'all' | 'aaieric'
+
+function countAaiericItems(){
+  return catalog.filter(k=>k.source==='aaieric').length;
+}
+
+function daysSince(timestamp){
+  return Math.floor((Date.now() - timestamp) / (1000*60*60*24));
+}
+
+function renderPriceIncreasePanel(){
+  const el = document.getElementById('price-increase-panel');
+  if(!el) return;
+  const aaiericCount = countAaiericItems();
+  // "Último aumento" para mostrar/deshacer: el más reciente que no haya sido ya deshecho.
+  const lastActiveLog = [...priceIncreaseLog].reverse().find(l=>!l.undone);
+  const stale = lastActiveLog && daysSince(lastActiveLog.date) > 30;
+
+  el.innerHTML = `
+    ${stale ? `
+      <div class="glass" style="padding:10px 12px; margin-bottom:12px; border-color:rgba(232,183,75,0.5); background:rgba(232,183,75,0.08);">
+        <div style="font-size:12.5px; font-weight:700; color:var(--warn);">⚠️ Catálogo desactualizado</div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:2px;">Pasaron ${daysSince(lastActiveLog.date)} días desde tu último aumento de precios. Fijate si ya salió una lista nueva de AAIERIC para actualizar.</div>
+      </div>
+    ` : ''}
+    ${lastActiveLog ? `
+      <div class="hint" style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <span>Último aumento aplicado: <b>${lastActiveLog.pct>0?'+':''}${lastActiveLog.pct}%</b> el ${new Date(lastActiveLog.date).toLocaleDateString('es-AR')} (${lastActiveLog.itemCount} ítems, ${scopeLabelShort(lastActiveLog.scope)}).</span>
+        <button class="btn btn-sm btn-ghost" id="btn-undo-pct-increase" style="flex-shrink:0;">↩️ Deshacer</button>
+      </div>
+    ` : ''}
+    <div class="row" style="margin-bottom:10px;">
+      <div class="field" style="margin-bottom:0;">
+        <label>% de variación del mes</label>
+        <input type="number" id="pct-increase-value" step="0.01" placeholder="Ej: 2.10">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Aplicar a</label>
+      <select id="pct-increase-scope">
+        <option value="all" ${priceIncreaseScope==='all'?'selected':''}>Todo el catálogo (${catalog.length} ítems)</option>
+        <option value="aaieric" ${priceIncreaseScope==='aaieric'?'selected':''}>Solo ítems de AAIERIC (${aaiericCount} ítems)</option>
+        <option value="selected" ${priceIncreaseScope==='selected'?'selected':''}>Elegir ítems puntuales...</option>
+      </select>
+    </div>
+    <div id="pct-item-picker" style="${priceIncreaseScope==='selected'?'':'display:none;'} margin-bottom:12px;"></div>
+    <button class="btn btn-primary" id="btn-apply-pct-increase">📈 Aplicar aumento</button>
+    ${priceIncreaseLog.length ? `<button class="btn btn-sm btn-ghost" id="btn-toggle-pct-history" style="margin-left:6px;">Ver historial (${priceIncreaseLog.length})</button>` : ''}
+    <div id="pct-history-list" style="display:none; margin-top:12px;"></div>
+  `;
+
+  document.getElementById('pct-increase-scope').addEventListener('change', (e)=>{
+    priceIncreaseScope = e.target.value;
+    document.getElementById('pct-item-picker').style.display = priceIncreaseScope==='selected' ? '' : 'none';
+    if(priceIncreaseScope==='selected') renderPctItemPicker();
+  });
+  if(priceIncreaseScope==='selected') renderPctItemPicker();
+  document.getElementById('btn-apply-pct-increase').addEventListener('click', applyPriceIncrease);
+  const undoBtn = document.getElementById('btn-undo-pct-increase');
+  if(undoBtn) undoBtn.addEventListener('click', undoLastPriceIncrease);
+  const histBtn = document.getElementById('btn-toggle-pct-history');
+  if(histBtn) histBtn.addEventListener('click', ()=>{
+    const wrap = document.getElementById('pct-history-list');
+    const showing = wrap.style.display !== 'none';
+    if(showing){ wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+    wrap.innerHTML = [...priceIncreaseLog].reverse().map(l=>`
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); padding:5px 0; border-bottom:1px solid var(--panel-border); ${l.undone?'opacity:.55;':''}">
+        <span>${new Date(l.date).toLocaleDateString('es-AR')} · ${scopeLabelShort(l.scope)}${l.undone?' · <i>deshecho</i>':''}</span>
+        <span style="font-weight:700; color:${l.pct>=0?'var(--accent-2)':'var(--danger)'};">${l.pct>0?'+':''}${l.pct}% (${l.itemCount} ítems)</span>
+      </div>
+    `).join('');
+  });
+}
+
+function scopeLabelShort(scope){
+  if(scope==='aaieric') return 'solo AAIERIC';
+  if(scope==='selected') return 'selección manual';
+  return 'todo el catálogo';
+}
+
+let priceIncreaseSelectedIds = new Set();
+let pctPickerSearch = '';
+function renderPctItemPicker(){
+  const el = document.getElementById('pct-item-picker');
+  if(!el) return;
+  const q = pctPickerSearch.trim().toLowerCase();
+  const items = catalog.filter(k=> !q || k.desc.toLowerCase().includes(q));
+  el.innerHTML = `
+    <div class="row" style="gap:6px; margin-bottom:8px;">
+      <input type="text" id="pct-picker-search" placeholder="🔍 Buscar ítem..." value="${pctPickerSearch}" style="flex:1;">
+      <button class="btn btn-sm" id="pct-picker-all" type="button">Todos</button>
+      <button class="btn btn-sm" id="pct-picker-none" type="button">Ninguno</button>
+    </div>
+    <div style="max-height:220px; overflow:auto; border:1px solid var(--panel-border); border-radius:9px; padding:8px 10px;">
+      ${items.length ? items.map(k=>`
+        <label class="checkline" style="padding:4px 0;">
+          <input type="checkbox" ${priceIncreaseSelectedIds.has(k.id)?'checked':''} onchange="togglePctSelected('${k.id}', this.checked)">
+          <span style="font-size:12.5px;">${k.desc} <span style="color:var(--text-faint);">— ${fmt(k.price,'ARS')}</span></span>
+        </label>
+      `).join('') : `<div style="font-size:12px; color:var(--text-faint); padding:6px 0;">Sin resultados</div>`}
+    </div>
+    <div class="hint" style="margin-top:6px;">${priceIncreaseSelectedIds.size} ítem${priceIncreaseSelectedIds.size===1?'':'s'} seleccionado${priceIncreaseSelectedIds.size===1?'':'s'}</div>
+  `;
+  document.getElementById('pct-picker-search').addEventListener('input', (e)=>{
+    pctPickerSearch = e.target.value;
+    const pos = e.target.selectionStart;
+    renderPctItemPicker();
+    const ni = document.getElementById('pct-picker-search');
+    ni.focus(); ni.setSelectionRange(pos,pos);
+  });
+  document.getElementById('pct-picker-all').addEventListener('click', ()=>{
+    items.forEach(k=>priceIncreaseSelectedIds.add(k.id));
+    renderPctItemPicker();
+  });
+  document.getElementById('pct-picker-none').addEventListener('click', ()=>{
+    items.forEach(k=>priceIncreaseSelectedIds.delete(k.id));
+    renderPctItemPicker();
+  });
+}
+function togglePctSelected(id, checked){
+  if(checked) priceIncreaseSelectedIds.add(id); else priceIncreaseSelectedIds.delete(id);
+  const hint = document.querySelector('#pct-item-picker .hint');
+  if(hint) hint.textContent = `${priceIncreaseSelectedIds.size} ítem${priceIncreaseSelectedIds.size===1?'':'s'} seleccionado${priceIncreaseSelectedIds.size===1?'':'s'}`;
+}
+
+function applyPriceIncrease(){
+  const pctInput = document.getElementById('pct-increase-value');
+  const pct = parseFloat(pctInput.value);
+  if(isNaN(pct) || pct===0){ toast('Cargá un porcentaje distinto de 0'); return; }
+  const scope = priceIncreaseScope;
+  let targets;
+  if(scope==='aaieric') targets = catalog.filter(k=>k.source==='aaieric');
+  else if(scope==='selected') targets = catalog.filter(k=>priceIncreaseSelectedIds.has(k.id));
+  else targets = catalog;
+  if(targets.length===0){ toast(scope==='selected' ? 'Tildá al menos un ítem de la lista' : 'No hay ítems para actualizar con ese filtro'); return; }
+
+  const scopeLabel = scope==='aaieric' ? `los ${targets.length} ítems marcados como AAIERIC`
+    : scope==='selected' ? `los ${targets.length} ítems que elegiste`
+    : `los ${targets.length} ítems de tu catálogo`;
+  confirmModalGeneric(
+    'Aplicar aumento de precios',
+    `Se va a aplicar un ${pct>0?'aumento':'ajuste'} del ${pct>0?'+':''}${pct}% a ${scopeLabel}. Los precios se redondean al peso. Vas a poder deshacer esto con el botón "↩️ Deshacer" mientras no apliques otro aumento después. ¿Continuar?`,
+    'Aplicar',
+    ()=>{
+      // Guardamos el precio anterior de cada ítem afectado para poder
+      // restaurarlo con exactitud (deshacer no es solo aplicar el % inverso,
+      // porque el redondeo al peso haría que no vuelva al valor exacto).
+      const snapshot = targets.map(k=>({ itemId:k.id, prevPrice:k.price }));
+      targets.forEach(k=>{
+        k.price = Math.max(0, Math.round(k.price * (1 + pct/100)));
+      });
+      priceIncreaseLog.push({ id:uid(), date:Date.now(), pct, scope, itemCount:targets.length, items:snapshot, undone:false });
+      persistAll();
+      if(scope==='selected') priceIncreaseSelectedIds = new Set();
+      renderCatalogView();
+      pctInput.value = '';
+      toast(`Aumento del ${pct>0?'+':''}${pct}% aplicado a ${targets.length} ítems ✓`, 3400);
+    }
+  );
+}
+
+function undoLastPriceIncrease(){
+  // Solo se puede deshacer la última entrada del historial que no esté ya deshecha.
+  const log = [...priceIncreaseLog].reverse().find(l=>!l.undone);
+  if(!log) return;
+  confirmModalGeneric(
+    'Deshacer aumento',
+    `Se va a restaurar el precio anterior de los ${log.itemCount} ítems afectados por el ${log.pct>0?'+':''}${log.pct}% aplicado el ${new Date(log.date).toLocaleDateString('es-AR')}. ¿Continuar?`,
+    'Deshacer',
+    ()=>{
+      let restored = 0;
+      (log.items||[]).forEach(snap=>{
+        const item = catalog.find(k=>k.id===snap.itemId);
+        if(item){ item.price = snap.prevPrice; restored++; }
+      });
+      log.undone = true;
+      persistAll();
+      renderCatalogView();
+      toast(`Se restauraron los precios de ${restored} ítems ✓`, 3400);
+    }
+  );
+}
+
+function importAAIERIC(){
+  const version = AAIERIC_TARIFFS[0];
+  const updateExisting = document.getElementById('aaieric-update-existing').checked;
+
+  const verb = updateExisting ? 'agregar ítems nuevos y actualizar los precios de los que ya tenías con el mismo nombre' : 'agregar solo los ítems nuevos (sin tocar precios que ya tenías cargados)';
+  confirmModalGeneric(
+    `Importar tarifas — ${version.label}`,
+    `Se van a revisar ${version.items.length} ítems de mano de obra (${version.label}) y ${verb}. ¿Continuar?`,
+    'Importar',
+    ()=>{
+      const byDesc = new Map(catalog.map(k=>[k.desc.trim().toLowerCase(), k]));
+      let added = 0, updated = 0;
+      version.items.forEach(([desc, unit, price])=>{
+        const key = desc.trim().toLowerCase();
+        const match = byDesc.get(key);
+        if(match){
+          if(updateExisting && match.price !== price){
+            match.price = price;
+            match.unit = unit;
+            match.source = 'aaieric';
+            updated++;
+          }
+        } else {
+          const item = { id:uid(), desc, unit, price, favorite:false, source:'aaieric' };
+          catalog.push(item);
+          byDesc.set(key, item);
+          added++;
+        }
+      });
+      persistAll();
+      renderCatalogView();
+      const parts = [];
+      if(added) parts.push(`${added} nuevos`);
+      if(updated) parts.push(`${updated} con precio actualizado`);
+      toast(parts.length ? `AAIERIC ${version.label}: ${parts.join(' · ')} ✓` : 'No había nada para agregar ni actualizar', 3400);
+    }
+  );
+}
+// Generic confirm modal with a custom confirm-button label (reuses the existing modal machinery).
+function confirmModalGeneric(title, msg, confirmLabel, onConfirm){
+  openModal(`
+    <h3>${title}</h3>
+    <p style="color:var(--text-dim); font-size:13.5px; margin-bottom:18px;">${msg}</p>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn" id="mc-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="mc-ok">${confirmLabel}</button>
+    </div>
+  `);
+  document.getElementById('mc-cancel').onclick = closeModal;
+  document.getElementById('mc-ok').onclick = ()=>{ onConfirm(); closeModal(); };
+}
+
+function switchCatalogSubtab(which){
+  document.getElementById('subtab-items').classList.toggle('active', which==='items');
+  document.getElementById('subtab-combos').classList.toggle('active', which==='combos');
+  document.getElementById('catalog-subview-items').style.display = which==='items' ? '' : 'none';
+  document.getElementById('catalog-subview-combos').style.display = which==='combos' ? '' : 'none';
+  if(which==='combos') renderCombosView();
+}
+
+/* ============================================================
+   COMBOS
+   ============================================================ */
+let comboDraftItems = [];
+function renderComboForm(){
+  const el = document.getElementById('combo-form');
+  if(!el) return;
+  const catalogOptions = catalog.length
+    ? `<select id="combo-pick-item"><option value="">— Elegir ítem del catálogo —</option>${catalog.map(k=>`<option value="${k.id}">${k.desc} — ${fmt(k.price,'ARS')}</option>`).join('')}</select>`
+    : `<p style="font-size:12px;color:var(--text-dim);">Primero cargá ítems en "📦 Ítems sueltos" para poder combinarlos.</p>`;
+
+  const draftRows = comboDraftItems.map((it, idx)=>`
+    <div class="row" style="align-items:end; margin-bottom:8px;">
+      <div class="field" style="flex:2; margin-bottom:0;"><label>${idx===0?'Ítem':''}</label><input type="text" value="${it.desc}" onchange="updateComboDraft(${idx},'desc',this.value)"></div>
+      <div class="field" style="flex:1; margin-bottom:0;"><label>${idx===0?'Cant.':''}</label><input type="number" value="${it.qty}" onchange="updateComboDraft(${idx},'qty',this.value)"></div>
+      <div class="field" style="flex:1; margin-bottom:0;"><label>${idx===0?'Precio':''}</label><input type="number" value="${it.price}" onchange="updateComboDraft(${idx},'price',this.value)"></div>
+      <button class="btn btn-sm btn-danger" onclick="removeComboDraft(${idx})">✕</button>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="chooser-row">${catalogOptions}${catalog.length?`<button class="btn btn-sm" id="combo-add-pick">＋ Agregar</button>`:''}</div>
+    ${comboDraftItems.length ? `<div style="margin:12px 0;">${draftRows}</div>` : `<p style="font-size:12px;color:var(--text-dim); margin:10px 0;">Todavía no agregaste ítems a este combo.</p>`}
+    ${fieldHtml({label:'Nombre del combo', id:'combo-name', placeholder:'Ej: Tablero completo'})}
+    <button class="btn btn-primary btn-block" id="btn-save-combo">Guardar combo</button>
+  `;
+  const pickBtn = document.getElementById('combo-add-pick');
+  if(pickBtn) pickBtn.addEventListener('click', ()=>{
+    const sel = document.getElementById('combo-pick-item');
+    const k = catalog.find(x=>x.id===sel.value); if(!k) return;
+    comboDraftItems.push({ desc:k.desc, unit:k.unit, price:k.price, qty:1 });
+    renderComboForm();
+  });
+  document.getElementById('btn-save-combo').addEventListener('click', ()=>{
+    const name = document.getElementById('combo-name').value.trim();
+    if(!name){ toast('Ponele un nombre al combo'); return; }
+    if(comboDraftItems.length===0){ toast('Agregá al menos un ítem al combo'); return; }
+    combos.push({ id:uid(), name, items: JSON.parse(JSON.stringify(comboDraftItems)) });
+    comboDraftItems = [];
+    persistAll();
+    renderComboForm();
+    renderCombosView();
+    toast('Combo guardado');
+  });
+}
+function updateComboDraft(idx, key, val){
+  if(key==='qty'||key==='price') val = parseFloat(val)||0;
+  comboDraftItems[idx][key] = val;
+}
+function removeComboDraft(idx){
+  comboDraftItems.splice(idx,1);
+  renderComboForm();
+}
+function renderCombosView(){
+  renderComboForm();
+  const list = document.getElementById('combos-list');
+  if(combos.length===0){
+    list.innerHTML = `<div class="empty-state"><div class="big">🧩</div>Todavía no armaste ningún combo.</div>`;
+    return;
+  }
+  list.innerHTML = combos.map(c=>{
+    const total = c.items.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.price)||0),0);
+    return `
+    <div class="mini-card">
+      <div class="mini-card-info" style="flex:1;">
+        <b>${c.name}</b>
+        <span>${c.items.length} ítem${c.items.length===1?'':'s'} · ${fmt(total,'ARS')}</span>
+      </div>
+      <div class="btn-row" style="margin:0;">
+        <button class="btn btn-sm" onclick="addComboToBudget('${c.id}')">＋ Agregar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCombo('${c.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteCombo(id){
+  confirmModal('Eliminar combo', '¿Eliminar este combo guardado?', ()=>{
+    combos = combos.filter(c=>c.id!==id); persistAll(); renderCombosView();
+  });
+}
+function addComboToBudget(id){
+  const c = combos.find(x=>x.id===id); if(!c) return;
+  current.items.push({ id:uid(), kind:'section', title:c.name });
+  c.items.forEach(it=>{
+    current.items.push({ id:uid(), kind:'item', desc:it.desc, unit:it.unit||'unidad', qty:it.qty||1, price:it.price||0, ivaRate:21 });
+  });
+  persistCurrent();
+  document.querySelector('.tab-btn[data-view="editor"]').click();
+  renderEditor(); renderPreview();
+  toast(`Combo "${c.name}" agregado al presupuesto`);
+}
+
+/* ============================================================
+   CUENTAS DE COBRO VIEW
+   ============================================================ */
+function renderAccountsView(){
+  document.getElementById('account-form').innerHTML = `
+    ${fieldHtml({label:'Nombre (Ej: MercadoPago, Banco Galicia)', id:'na-label'})}
+    ${fieldHtml({label:'Detalles (alias, CBU, titular...)', id:'na-details', textarea:true})}
+  `;
+  const list = document.getElementById('accounts-list');
+  if(accounts.length===0){
+    list.innerHTML = `<div class="empty-state"><div class="big">💳</div>Todavía no cargaste cuentas de cobro.</div>`;
+    return;
+  }
+  list.innerHTML = accounts.map(a=>`
+    <div class="mini-card">
+      <div class="mini-card-info"><b>${a.label}</b><span>${(a.details||'').replace(/\n/g,' · ')}</span></div>
+      <button class="btn btn-sm btn-danger" onclick="deleteAccount('${a.id}')">✕</button>
+    </div>
+  `).join('');
+}
+document.getElementById('btn-add-account').addEventListener('click', ()=>{
+  const label = document.getElementById('na-label').value.trim();
+  if(!label){ toast('Poné un nombre para la cuenta'); return; }
+  accounts.push({ id:uid(), label, details: document.getElementById('na-details').value.trim() });
+  persistAll(); renderAccountsView(); toast('Cuenta guardada');
+});
+function deleteAccount(id){
+  confirmModal('Eliminar cuenta', '¿Eliminar esta cuenta de cobro?', ()=>{
+    accounts = accounts.filter(a=>a.id!==id);
+    current.accountsShown = current.accountsShown.filter(x=>x!==id);
+    persistAll(); persistCurrent(); renderAccountsView();
+  });
+}
+
+/* ============================================================
+   HISTORIAL VIEW
+   ============================================================ */
+const STATUS_LABEL = { draft:'Borrador', sent:'Enviado', accepted:'Aceptado', rejected:'Rechazado' };
+const STATUS_CLASS = { draft:'gray', sent:'blue', accepted:'green', rejected:'red' };
+let historialSearch = '';
+let catalogSearch = '';
+
+function isBudgetOverdue(b){
+  if(b.status !== 'sent' && b.status !== 'draft') return false;
+  if(!b.date || !b.validity) return false;
+  const d = new Date(b.date + 'T00:00:00');
+  d.setDate(d.getDate() + (parseInt(b.validity)||0));
+  return d < new Date(new Date().toDateString());
+}
+
+/* ============================================================
+   RESUMEN RÁPIDO (arriba del editor, al abrir la app)
+   ============================================================ */
+function budgetExpiryDate(b){
+  if(!b.date || !b.validity) return null;
+  const d = new Date(b.date + 'T00:00:00');
+  d.setDate(d.getDate() + (parseInt(b.validity)||0));
+  return d;
+}
+function renderQuickGlance(){
+  const el = document.getElementById('quick-glance');
+  if(!el) return;
+  if(budgets.length===0){ el.innerHTML = ''; return; }
+
+  const today = new Date(new Date().toDateString());
+  const in7days = new Date(today); in7days.setDate(in7days.getDate()+7);
+
+  const pending = budgets.filter(b=>b.status==='sent');
+
+  const expiringSoon = budgets.filter(b=>{
+    if(b.status!=='sent' && b.status!=='draft') return false;
+    const exp = budgetExpiryDate(b);
+    if(!exp) return false;
+    return exp >= today && exp <= in7days;
+  });
+
+  const now = new Date();
+  const monthBudgets = budgets.filter(b=>{
+    if(b.status==='rejected' || !b.date) return false;
+    const d = new Date(b.date+'T00:00:00');
+    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+  const monthTotal = monthBudgets.reduce((s,b)=>s + computeTotals(b).grandTotal, 0);
+  const monthCurrency = monthBudgets.length ? monthBudgets[0].currency : 'ARS';
+
+  el.innerHTML = `
+    <div class="glass qg-card" id="qg-pending">
+      <div class="qg-label">📤 Pendientes de respuesta</div>
+      <div class="qg-value">${pending.length}</div>
+      <div class="qg-sub">${pending.length===1 ? 'presupuesto enviado' : 'presupuestos enviados'}, esperando el cliente</div>
+    </div>
+    <div class="glass qg-card ${expiringSoon.length ? 'qg-warn' : ''}" id="qg-expiring">
+      <div class="qg-label">⏳ Vencen esta semana</div>
+      <div class="qg-value">${expiringSoon.length}</div>
+      <div class="qg-sub">${expiringSoon.length ? 'convendría hacer seguimiento' : 'ninguno por ahora'}</div>
+    </div>
+    <div class="glass qg-card qg-accent" id="qg-month">
+      <div class="qg-label">📅 Presupuestado este mes</div>
+      <div class="qg-value">${fmt(monthTotal, monthCurrency)}</div>
+      <div class="qg-sub">${monthBudgets.length} presupuesto${monthBudgets.length===1?'':'s'} (sin contar rechazados)</div>
+    </div>
+  `;
+
+  document.getElementById('qg-pending').addEventListener('click', ()=>{
+    historialSearch = 'Enviado';
+    document.querySelector('.tab-btn[data-view="historial"]').click();
+  });
+  document.getElementById('qg-expiring').addEventListener('click', ()=>{
+    historialSearch = '';
+    document.querySelector('.tab-btn[data-view="historial"]').click();
+  });
+  document.getElementById('qg-month').addEventListener('click', ()=>{
+    historialSearch = '';
+    document.querySelector('.tab-btn[data-view="historial"]').click();
+  });
+}
+
+function renderHistorial(){
+  const wrap = document.getElementById('historial-list');
+  if(budgets.length===0){
+    wrap.innerHTML = `<div class="empty-state"><div class="big">🗂</div>Todavía no guardaste ningún presupuesto.<br>Creá uno desde "✨ Nuevo presupuesto".</div>`;
+    return;
+  }
+  const q = historialSearch.trim().toLowerCase();
+  let filtered = [...budgets];
+  if(q){
+    filtered = filtered.filter(b=>{
+      const haystack = [b.number, b.client&&b.client.name, b.docTitle, STATUS_LABEL[b.status]].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+  const sorted = filtered.sort((a,b)=>b.createdAt-a.createdAt);
+
+  const cardsHtml = sorted.length ? sorted.map(b=>{
+    const totals = computeTotals(b);
+    const overdue = isBudgetOverdue(b);
+    return `
+    <div class="glass hist-card" ${overdue ? 'style="border-color:rgba(239,91,111,0.5);"' : ''}>
+      <div onclick="loadBudgetIntoEditor('${b.id}')" style="cursor:pointer;">
+        <div class="hist-card-top">
+          <b>${b.number}</b>
+          <div style="display:flex; gap:6px;">
+            ${overdue ? `<span class="pill red">Vencido</span>` : ''}
+            <span class="pill ${STATUS_CLASS[b.status]}">${STATUS_LABEL[b.status]}</span>
+          </div>
+        </div>
+        <div class="client">${b.client && b.client.name ? b.client.name : 'Sin cliente asignado'}</div>
+        <div class="amount">${fmt(totals.grandTotal, b.currency)}</div>
+        <div class="date">${b.date} · ${b.docTitle}</div>
+      </div>
+      <div class="btn-row">
+        <select class="status-select btn-sm" style="flex:1; padding:6px 8px; border-radius:7px; border:1px solid var(--panel-border); background:var(--bg-soft); color:var(--text); font-size:12px;" onchange="setBudgetStatus('${b.id}', this.value)">
+          ${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${s===b.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+        </select>
+        <button class="btn btn-sm" title="Duplicar" onclick="duplicateBudget('${b.id}', event)">⧉</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteBudget('${b.id}', event)">✕</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state">No hay presupuestos que coincidan con "${historialSearch}".</div>`;
+
+  wrap.innerHTML = `
+    <div class="field" style="max-width:320px; margin-bottom:16px;">
+      <input type="text" id="historial-search-input" placeholder="🔍 Buscar por cliente, número o estado..." value="${historialSearch}">
+    </div>
+    <div class="hist-grid">${cardsHtml}</div>
+  `;
+  const searchInput = document.getElementById('historial-search-input');
+  searchInput.addEventListener('input', ()=>{
+    historialSearch = searchInput.value;
+    const pos = searchInput.selectionStart;
+    renderHistorial();
+    const newInput = document.getElementById('historial-search-input');
+    newInput.focus();
+    newInput.setSelectionRange(pos,pos);
+  });
+}
+function setBudgetStatus(id, status){
+  const b = budgets.find(x=>x.id===id); if(b){ b.status=status; persistAll(); renderHistorial(); }
+}
+function deleteBudget(id, ev){
+  if(ev) ev.stopPropagation();
+  confirmModal('Eliminar presupuesto', 'Esta acción no se puede deshacer. ¿Eliminar del historial?', ()=>{
+    budgets = budgets.filter(b=>b.id!==id); persistAll(); renderHistorial();
+  });
+}
+function duplicateBudget(id, ev){
+  if(ev) ev.stopPropagation();
+  const b = budgets.find(x=>x.id===id); if(!b) return;
+  const copy = JSON.parse(JSON.stringify(b));
+  copy.id = uid();
+  copy.number = nextBudgetNumber();
+  copy.date = new Date().toISOString().slice(0,10);
+  copy.status = 'draft';
+  copy.createdAt = Date.now();
+  current = copy;
+  persistCurrent();
+  document.querySelector('.tab-btn[data-view="editor"]').click();
+  renderEditor(); renderPreview();
+  toast('Presupuesto duplicado — revisá los datos antes de enviarlo');
+}
+function loadBudgetIntoEditor(id){
+  const b = budgets.find(x=>x.id===id); if(!b) return;
+  current = JSON.parse(JSON.stringify(b));
+  persistCurrent();
+  document.querySelector('.tab-btn[data-view="editor"]').click();
+  renderEditor(); renderPreview();
+}
+
+/* ============================================================
+   CALCULATIONS
+   ============================================================ */
+function computeTotals(b){
+  const lineItems = b.items.filter(i=>i.kind==='item');
+  const subtotalNeto = lineItems.reduce((s,i)=>s + (Number(i.qty)||0)*(Number(i.price)||0), 0);
+
+  let discountAmount = 0;
+  if(b.globalDiscount.type==='percent') discountAmount = subtotalNeto * (Number(b.globalDiscount.value)||0) / 100;
+  else discountAmount = Number(b.globalDiscount.value)||0;
+  discountAmount = Math.min(discountAmount, subtotalNeto);
+
+  const netoAfterDiscount = subtotalNeto - discountAmount;
+
+  let surchargeTotal = 0;
+  const surchargeLines = (b.surcharges||[]).map(s=>{
+    const amt = s.type==='percent' ? netoAfterDiscount*(Number(s.value)||0)/100 : (Number(s.value)||0);
+    surchargeTotal += amt;
+    return { label:s.label, amount:amt };
+  });
+
+  const subtotalAjustado = netoAfterDiscount + surchargeTotal;
+  const ratio = subtotalNeto > 0 ? subtotalAjustado / subtotalNeto : 1;
+
+  const ivaGroups = {};
+  if(b.ivaBreakdown){
+    lineItems.forEach(i=>{
+      const lineNeto = (Number(i.qty)||0)*(Number(i.price)||0) * ratio;
+      const rate = Number(i.ivaRate)||0;
+      const ivaAmt = lineNeto * rate/100;
+      ivaGroups[rate] = (ivaGroups[rate]||0) + ivaAmt;
+    });
+  }
+  const totalIVA = Object.values(ivaGroups).reduce((s,v)=>s+v,0);
+  const grandTotal = subtotalAjustado + totalIVA;
+
+  let depositAmount = 0;
+  if(b.deposit.type==='percent') depositAmount = grandTotal * (Number(b.deposit.value)||0) / 100;
+  else depositAmount = Number(b.deposit.value)||0;
+
+  const balanceDue = grandTotal - depositAmount;
+
+  return { subtotalNeto, discountAmount, netoAfterDiscount, surchargeLines, surchargeTotal, subtotalAjustado, ivaGroups, totalIVA, grandTotal, depositAmount, balanceDue };
+}
+
+/* ============================================================
+   EDITOR — collapsible section shell
+   ============================================================ */
+let collapsedSections = {};
+function sectionShell(num, title, bodyHtml, key){
+  const isCollapsed = !!collapsedSections[key];
+  return `
+  <div class="glass panel">
+    <div class="section-head ${isCollapsed?'collapsed':''}" data-seckey="${key}">
+      <h3><span class="section-num">${num}</span>${title}</h3>
+      <span class="chev">▾</span>
+    </div>
+    <div class="section-body ${isCollapsed?'hidden':''}" data-secbody="${key}">${bodyHtml}</div>
+  </div>`;
+}
+function bindSectionToggles(){
+  document.querySelectorAll('.section-head').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const key = h.dataset.seckey;
+      collapsedSections[key] = !collapsedSections[key];
+      h.classList.toggle('collapsed', collapsedSections[key]);
+      document.querySelector(`[data-secbody="${key}"]`).classList.toggle('hidden', collapsedSections[key]);
+    });
+  });
+}
+
+/* ============================================================
+   EDITOR — main render
+   ============================================================ */
+function renderEditor(){
+  renderQuickGlance();
+  const col = document.getElementById('editor-col');
+
+  // ---- Section 01: Tu negocio (shortcut link to full form) ----
+  const s1 = `
+    <p style="font-size:12.5px; color:var(--text-dim); margin:0 0 10px;">Editá el nombre, logo y datos de contacto de tu negocio en la pestaña <b>🏢 Mi negocio</b>. Estos datos se usan en todos tus presupuestos.</p>
+    <button class="btn btn-sm" onclick="document.querySelector('.tab-btn[data-view=negocio]').click()">Ir a Mi negocio →</button>
+  `;
+
+  // ---- Section 02: Datos del presupuesto ----
+  const s2 = `
+    <label class="checkline"><input type="checkbox" id="f-pedido" ${current.pedidoMode?'checked':''}> Modo PEDIDO a proveedor</label>
+    <div class="hint" style="margin:-6px 0 12px;">Activá para emitir un pedido (sin precios) en vez de un presupuesto.</div>
+    <div class="row">
+      ${fieldHtml({label:'N° de documento', id:'f-number', value:current.number})}
+      ${fieldHtml({label:'Fecha', id:'f-date', type:'date', value:current.date})}
+    </div>
+    <div class="row">
+      ${fieldHtml({label:'Validez (días)', id:'f-validity', type:'number', value:current.validity})}
+      ${fieldHtml({label:'Moneda', id:'f-currency', options:[
+        {value:'ARS', label:'ARS — Peso argentino ($)'},
+        {value:'USD', label:'USD — Dólar estadounidense (US$)'},
+        {value:'EUR', label:'EUR — Euro (€)'}
+      ], value:current.currency})}
+    </div>
+    ${fieldHtml({label:'Título del documento', id:'f-doctitle', options:['Presupuesto','Cotización','Proforma','Orden de trabajo'], value:current.docTitle})}
+    <label class="checkline"><input type="checkbox" id="f-ivabreak" ${current.ivaBreakdown?'checked':''}> Desglosar IVA por alícuota</label>
+  `;
+
+  // ---- Section 03: Cliente ----
+  const savedOptions = clients.map(c=>`<option value="${c.id}" ${current.clientId===c.id?'selected':''}>${c.name}</option>`).join('');
+  const s3 = `
+    <div class="chooser-row">
+      <select id="f-client-select"><option value="">— Elegir cliente guardado —</option>${savedOptions}</select>
+      <button class="btn btn-sm" id="f-client-savebtn">💾 Guardar</button>
+    </div>
+    ${fieldHtml({label:'Nombre / Empresa', id:'f-client-name', value:current.client.name})}
+    <div class="row">
+      ${fieldHtml({label:'CUIT / DNI (opcional)', id:'f-client-doc', value:current.client.cuitDni})}
+      ${fieldHtml({label:'Teléfono', id:'f-client-phone', value:current.client.phone})}
+    </div>
+    ${fieldHtml({label:'Email', id:'f-client-email', value:current.client.email})}
+    ${fieldHtml({label:'Dirección / Obra', id:'f-client-address', value:current.client.address})}
+  `;
+
+  // ---- Section 04: Items ----
+  const s4 = renderItemsSection();
+
+  // ---- Section 05: Descuentos y totales ----
+  const surchargesHtml = (current.surcharges||[]).map((s,idx)=>`
+    <div class="row" style="align-items:end; margin-bottom:8px;">
+      <div class="field" style="flex:2;"><label>${idx===0?'Etiqueta':''}</label><input type="text" value="${s.label}" oninput="updateSurcharge('${s.id}','label',this.value)" placeholder="Ej: Flete, urgencia..."></div>
+      <div class="field" style="flex:1;"><label>${idx===0?'Tipo':''}</label>
+        <select onchange="updateSurcharge('${s.id}','type',this.value)">
+          <option value="percent" ${s.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${s.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;"><label>${idx===0?'Valor':''}</label><input type="number" value="${s.value}" oninput="updateSurcharge('${s.id}','value',this.value)"></div>
+      <button class="btn btn-sm btn-danger" style="margin-bottom:2px;" onclick="removeSurcharge('${s.id}')">✕</button>
+    </div>
+  `).join('');
+  const s5 = `
+    <div class="field"><label>Descuento global</label>
+      <div class="row">
+        <select id="f-disc-type" style="flex:1;">
+          <option value="percent" ${current.globalDiscount.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${current.globalDiscount.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+        <input type="number" id="f-disc-value" style="flex:1;" value="${current.globalDiscount.value}">
+      </div>
+    </div>
+    <div class="field"><label>Recargos / Adicionales</label>
+      ${surchargesHtml}
+      <button class="btn btn-sm" id="f-add-surcharge">＋ Agregar recargo</button>
+      <div class="hint">Sumá los que necesites (flete, instalación, urgencia...).</div>
+    </div>
+    <div class="field"><label>Seña / Anticipo</label>
+      <div class="row">
+        <select id="f-deposit-type" style="flex:1;">
+          <option value="percent" ${current.deposit.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${current.deposit.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+        <input type="number" id="f-deposit-value" style="flex:1;" value="${current.deposit.value}">
+      </div>
+    </div>
+  `;
+
+  // ---- Section 06: Condiciones y notas ----
+  const s6 = `
+    ${snippetFieldBlock('paymentTerms','Forma de pago','f-paymentterms', current.paymentTerms, 'Ej: Transferencia o efectivo', false)}
+    ${snippetFieldBlock('deliveryTerms','Plazo de entrega / ejecución','f-deliveryterms', current.deliveryTerms, 'Ej: 5 días hábiles desde la seña', false)}
+    ${snippetFieldBlock('notes','Notas para el cliente','f-notes', current.notes, '', true)}
+    ${snippetFieldBlock('termsConditions','Términos y condiciones','f-terms', current.termsConditions, '', true)}
+    <label class="checkline"><input type="checkbox" id="f-signature" ${current.includeSignature?'checked':''}> Incluir línea de firma y aclaración</label>
+  `;
+
+  // ---- Section 07: Cuentas de cobro ----
+  const s7 = accounts.length===0
+    ? `<p style="font-size:12.5px; color:var(--text-dim);">Todavía no cargaste cuentas. Andá a <b>💳 Cuentas</b> para agregar una.</p>`
+    : accounts.map(a=>`
+        <label class="checkline"><input type="checkbox" ${current.accountsShown.includes(a.id)?'checked':''} onchange="toggleAccountShown('${a.id}')"> ${a.label}</label>
+      `).join('');
+
+  // ---- Section 08: Diseño del PDF ----
+  const s8 = `
+    <div class="field"><label>Color de marca</label>
+      <div class="swatch-row">
+        ${COLOR_SWATCHES.map(c=>`<div class="swatch ${current.design.color===c?'active':''}" style="background:${c};" onclick="setDesignColor('${c}', event)"></div>`).join('')}
+        <input type="color" value="${current.design.color}" id="f-color-custom" style="width:30px;height:30px;border-radius:9px;border:none;padding:0;cursor:pointer;">
+      </div>
+    </div>
+    ${fieldHtml({label:'Tipografía del documento', id:'f-font', options:[
+      {value:'classica', label:'Clásica'},
+      {value:'moderna', label:'Moderna'},
+      {value:'elegante', label:'Elegante'}
+    ], value:current.design.font})}
+    <label class="checkline"><input type="checkbox" id="f-showlogo" ${current.design.showLogo?'checked':''}> Mostrar logo</label>
+    <label class="checkline"><input type="checkbox" id="f-showunit" ${current.design.showUnitColumn?'checked':''}> Mostrar columna "Unidad"</label>
+  `;
+
+  col.innerHTML =
+    sectionShell(1,'Tu negocio', s1, 'biz') +
+    sectionShell(2,'Datos del documento', s2, 'doc') +
+    sectionShell(3,'Cliente', s3, 'client') +
+    sectionShell(4,'Ítems', s4, 'items') +
+    sectionShell(5,'Descuentos y totales', s5, 'totals') +
+    sectionShell(6,'Condiciones y notas', s6, 'notes') +
+    sectionShell(7,'Datos de pago', s7, 'accounts') +
+    sectionShell(8,'Diseño del PDF', s8, 'design');
+
+  bindSectionToggles();
+  bindEditorEvents();
+}
+
+/* ============================================================
+   ITEMS SECTION
+   ============================================================ */
+function renderItemsSection(){
+  const rows = current.items.map((it, idx)=>{
+    if(it.kind==='section'){
+      return `
+      <div class="section-title-row">
+        <span style="color:var(--text-faint);">§</span>
+        <input type="text" value="${it.title}" placeholder="Título de sección" oninput="updateItemLive('${it.id}','title',this.value)" style="flex:1;">
+        <button class="btn btn-sm btn-danger" onclick="removeItem('${it.id}')">✕</button>
+      </div>`;
+    }
+    const lineTotal = (Number(it.qty)||0)*(Number(it.price)||0);
+    const lineCost = (Number(it.qty)||0)*(Number(it.cost)||0);
+    const lineProfit = lineTotal - lineCost;
+    return `
+      <div class="item-row">
+        <div class="item-row-top">
+          <div class="item-fields">
+            <div class="field" style="margin-bottom:8px;">
+              <input type="text" value="${it.desc}" placeholder="Descripción del trabajo o producto" oninput="updateItemLive('${it.id}','desc',this.value)">
+            </div>
+            <div class="item-line2">
+              <div class="field"><label>Unidad</label><input type="text" value="${it.unit||''}" placeholder="unidad" oninput="updateItemLive('${it.id}','unit',this.value)"></div>
+              <div class="field"><label>Cant.</label><input type="number" value="${it.qty}" oninput="updateItemLive('${it.id}','qty',this.value)"></div>
+              <div class="field"><label>Precio</label><input type="number" value="${it.price}" oninput="updateItemLive('${it.id}','price',this.value)"></div>
+              ${current.ivaBreakdown ? `<div class="field"><label>IVA</label><select onchange="updateItem('${it.id}','ivaRate',this.value)">${IVA_RATES.map(r=>`<option value="${r}" ${Number(it.ivaRate)===r?'selected':''}>${r}%</option>`).join('')}</select></div>` : `<div></div>`}
+              <div class="item-total" id="total-${it.id}">${current.pedidoMode ? '' : fmt(lineTotal)}</div>
+            </div>
+            ${current.showCosts ? `
+            <div class="item-line2" style="margin-top:6px; grid-template-columns: 1fr 1fr 1fr;">
+              <div class="field"><label>Costo unit. (interno)</label><input type="number" value="${it.cost||0}" oninput="updateItemLive('${it.id}','cost',this.value)"></div>
+              <div class="field"><label>Costo total</label><div class="item-total" id="cost-${it.id}" style="text-align:left; color:var(--text-dim); font-weight:600;">${fmt(lineCost)}</div></div>
+              <div class="field"><label>Ganancia</label><div class="item-total" id="profit-${it.id}" style="text-align:left; color:${lineProfit>=0?'var(--accent-2)':'var(--danger)'}; font-weight:700;">${fmt(lineProfit)}</div></div>
+            </div>` : ''}
+          </div>
+        </div>
+        <div class="item-actions" style="justify-content:flex-end;">
+          <button class="btn btn-sm btn-ghost" title="Guardar en catálogo" onclick="saveItemToCatalog('${it.id}')">📚</button>
+          <button class="btn btn-sm btn-danger" onclick="removeItem('${it.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const catalogQuick = catalog.length ? `
+    <div class="field">
+      <label>📚 Agregar desde catálogo</label>
+      <select id="f-catalog-quickadd">
+        <option value="">— Elegir ítem guardado —</option>
+        ${catalog.map(k=>`<option value="${k.id}">${k.favorite?'★ ':''}${k.desc} — ${fmt(k.price,'ARS')}</option>`).join('')}
+      </select>
+    </div>` : '';
+
+  const marginBox = current.showCosts ? `<div id="margin-box-wrap">${renderMarginBox()}</div>` : '';
+
+  return `
+    <label class="checkline" style="margin-bottom:10px;"><input type="checkbox" id="f-showcosts" ${current.showCosts?'checked':''}> 💰 Ver costos y margen (interno, no se imprime)</label>
+    ${rows || `<p style="font-size:12.5px;color:var(--text-dim);">Todavía no agregaste ítems.</p>`}
+    <div class="btn-row">
+      <button class="btn btn-sm btn-primary" id="f-add-item">＋ Agregar ítem</button>
+      <button class="btn btn-sm" id="f-add-section">＋ Título de sección</button>
+    </div>
+    ${catalogQuick}
+    <div class="hint">Las secciones agrupan ítems en el PDF (ej: "Mano de obra", "Materiales"). Guardá tus ítems frecuentes con 📚.</div>
+    ${marginBox}
+  `;
+}
+function computeMargin(){
+  const lineItems = current.items.filter(i=>i.kind==='item');
+  const totalSale = lineItems.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.price)||0), 0);
+  const totalCost = lineItems.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.cost)||0), 0);
+  const profit = totalSale - totalCost;
+  const marginPct = totalSale > 0 ? (profit/totalSale)*100 : 0;
+  return { totalSale, totalCost, profit, marginPct };
+}
+function renderMarginBox(){
+  const m = computeMargin();
+  return `
+    <div class="glass" style="padding:14px; margin-top:14px; border-color:rgba(62,207,142,0.25);">
+      <div style="font-size:11px; font-weight:700; color:var(--accent-2); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">💰 Margen interno (no aparece en el PDF)</div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; padding:3px 0; color:var(--text-dim);"><span>Costo total</span><span>${fmt(m.totalCost)}</span></div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; padding:3px 0; color:var(--text-dim);"><span>Venta (ítems)</span><span>${fmt(m.totalSale)}</span></div>
+      <div style="display:flex; justify-content:space-between; font-size:14.5px; font-weight:800; padding-top:6px; margin-top:4px; border-top:1px solid var(--panel-border); color:${m.profit>=0?'var(--accent-2)':'var(--danger)'};">
+        <span>Ganancia (${m.marginPct.toFixed(1)}%)</span><span>${fmt(m.profit)}</span>
+      </div>
+    </div>`;
+}
+function updateItem(id, key, val){
+  const it = current.items.find(x=>x.id===id); if(!it) return;
+  if(key==='qty' || key==='price' || key==='ivaRate' || key==='cost') val = parseFloat(val)||0;
+  it[key] = val;
+  persistCurrent();
+  refreshItemsAndPreview();
+}
+function updateItemLive(id, key, val){
+  // Lightweight update used on every keystroke: avoids re-rendering the whole
+  // items list (which would break focus/cursor position while typing).
+  const it = current.items.find(x=>x.id===id); if(!it) return;
+  if(key==='qty' || key==='price' || key==='cost') val = parseFloat(val);
+  it[key] = (key==='qty'||key==='price'||key==='cost') ? (isNaN(val)?0:val) : val;
+  persistCurrent();
+  if(key==='qty' || key==='price'){
+    const totalEl = document.getElementById('total-'+id);
+    if(totalEl && !current.pedidoMode){
+      totalEl.textContent = fmt((Number(it.qty)||0)*(Number(it.price)||0));
+    }
+  }
+  if((key==='qty' || key==='price' || key==='cost') && current.showCosts){
+    const lineCost = (Number(it.qty)||0)*(Number(it.cost)||0);
+    const lineProfit = (Number(it.qty)||0)*(Number(it.price)||0) - lineCost;
+    const costEl = document.getElementById('cost-'+id);
+    const profitEl = document.getElementById('profit-'+id);
+    if(costEl) costEl.textContent = fmt(lineCost);
+    if(profitEl){
+      profitEl.textContent = fmt(lineProfit);
+      profitEl.style.color = lineProfit>=0 ? 'var(--accent-2)' : 'var(--danger)';
+    }
+    const marginWrap = document.getElementById('margin-box-wrap');
+    if(marginWrap) marginWrap.innerHTML = renderMarginBox();
+  }
+  renderPreview();
+}
+function removeItem(id){
+  current.items = current.items.filter(x=>x.id!==id);
+  persistCurrent(); refreshItemsAndPreview();
+}
+function saveItemToCatalog(id){
+  const it = current.items.find(x=>x.id===id); if(!it) return;
+  catalog.push({ id:uid(), desc:it.desc||'Ítem', unit:it.unit||'unidad', price:it.price||0, favorite:false });
+  persistAll(); toast('Guardado en tu catálogo');
+}
+function refreshItemsAndPreview(){
+  document.querySelector('[data-secbody="items"]').innerHTML = renderItemsSection();
+  bindItemsEvents();
+  renderPreview();
+}
+
+/* ============================================================
+   SURCHARGES
+   ============================================================ */
+function updateSurcharge(id, key, val){
+  const s = current.surcharges.find(x=>x.id===id); if(!s) return;
+  if(key==='value') val = parseFloat(val)||0;
+  s[key]=val; persistCurrent(); renderPreview();
+}
+function removeSurcharge(id){
+  current.surcharges = current.surcharges.filter(x=>x.id!==id);
+  persistCurrent();
+  document.querySelector('[data-secbody="totals"]').outerHTML = sectionShell(5,'Descuentos y totales', rebuildTotalsSection(), 'totals');
+  bindEditorEvents(); renderPreview();
+}
+function rebuildTotalsSection(){
+  // helper to rebuild just section 5's inner html string (reuses logic in renderEditor s5)
+  const surchargesHtml = (current.surcharges||[]).map((s,idx)=>`
+    <div class="row" style="align-items:end; margin-bottom:8px;">
+      <div class="field" style="flex:2;"><label>${idx===0?'Etiqueta':''}</label><input type="text" value="${s.label}" oninput="updateSurcharge('${s.id}','label',this.value)" placeholder="Ej: Flete, urgencia..."></div>
+      <div class="field" style="flex:1;"><label>${idx===0?'Tipo':''}</label>
+        <select onchange="updateSurcharge('${s.id}','type',this.value)">
+          <option value="percent" ${s.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${s.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;"><label>${idx===0?'Valor':''}</label><input type="number" value="${s.value}" oninput="updateSurcharge('${s.id}','value',this.value)"></div>
+      <button class="btn btn-sm btn-danger" style="margin-bottom:2px;" onclick="removeSurcharge('${s.id}')">✕</button>
+    </div>
+  `).join('');
+  return `
+    <div class="field"><label>Descuento global</label>
+      <div class="row">
+        <select id="f-disc-type" style="flex:1;">
+          <option value="percent" ${current.globalDiscount.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${current.globalDiscount.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+        <input type="number" id="f-disc-value" style="flex:1;" value="${current.globalDiscount.value}">
+      </div>
+    </div>
+    <div class="field"><label>Recargos / Adicionales</label>
+      ${surchargesHtml}
+      <button class="btn btn-sm" id="f-add-surcharge">＋ Agregar recargo</button>
+      <div class="hint">Sumá los que necesites (flete, instalación, urgencia...).</div>
+    </div>
+    <div class="field"><label>Seña / Anticipo</label>
+      <div class="row">
+        <select id="f-deposit-type" style="flex:1;">
+          <option value="percent" ${current.deposit.type==='percent'?'selected':''}>%</option>
+          <option value="fixed" ${current.deposit.type==='fixed'?'selected':''}>Monto fijo</option>
+        </select>
+        <input type="number" id="f-deposit-value" style="flex:1;" value="${current.deposit.value}">
+      </div>
+    </div>
+  `;
+}
+function toggleAccountShown(id){
+  const idx = current.accountsShown.indexOf(id);
+  if(idx>=0) current.accountsShown.splice(idx,1); else current.accountsShown.push(id);
+  persistCurrent(); renderPreview();
+}
+function setDesignColor(c, ev){
+  current.design.color = c; persistCurrent();
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+  if(ev && ev.target) ev.target.classList.add('active');
+  renderPreview();
+}
+
+/* ============================================================
+   BIND EDITOR EVENTS
+   ============================================================ */
+function bindItemsEvents(){
+  const addItemBtn = document.getElementById('f-add-item');
+  if(addItemBtn) addItemBtn.addEventListener('click', ()=>{
+    current.items.push({ id:uid(), kind:'item', desc:'', unit:'unidad', qty:1, price:0, ivaRate:21 });
+    persistCurrent(); refreshItemsAndPreview();
+  });
+  const addSecBtn = document.getElementById('f-add-section');
+  if(addSecBtn) addSecBtn.addEventListener('click', ()=>{
+    current.items.push({ id:uid(), kind:'section', title:'' });
+    persistCurrent(); refreshItemsAndPreview();
+  });
+  const quick = document.getElementById('f-catalog-quickadd');
+  if(quick) quick.addEventListener('change', ()=>{
+    const id = quick.value; if(!id) return;
+    const k = catalog.find(x=>x.id===id); if(!k) return;
+    current.items.push({ id:uid(), kind:'item', desc:k.desc, unit:k.unit, qty:1, price:k.price, ivaRate:21 });
+    persistCurrent(); refreshItemsAndPreview();
+  });
+  const showCostsChk = document.getElementById('f-showcosts');
+  if(showCostsChk) showCostsChk.addEventListener('change', ()=>{
+    current.showCosts = showCostsChk.checked;
+    persistCurrent(); refreshItemsAndPreview();
+  });
+}
+
+function bindEditorEvents(){
+  bindItemsEvents();
+
+  const bind = (id, handler) => { const el = document.getElementById(id); if(el) el.addEventListener('input', handler); };
+  const bindChange = (id, handler) => { const el = document.getElementById(id); if(el) el.addEventListener('change', handler); };
+
+  bindChange('f-pedido', (e)=>{ current.pedidoMode = e.target.checked; persistCurrent(); refreshItemsAndPreview(); });
+  bind('f-number', (e)=>{ current.number = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-date', (e)=>{ current.date = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-validity', (e)=>{ current.validity = e.target.value; persistCurrent(); renderPreview(); });
+  bindChange('f-currency', (e)=>{ current.currency = e.target.value; persistCurrent(); renderPreview(); });
+  bindChange('f-doctitle', (e)=>{ current.docTitle = e.target.value; persistCurrent(); renderPreview(); });
+  bindChange('f-ivabreak', (e)=>{ current.ivaBreakdown = e.target.checked; persistCurrent(); refreshItemsAndPreview(); });
+
+  bindChange('f-client-select', (e)=>{
+    const id = e.target.value;
+    if(!id){ current.clientId=null; }
+    else { useClientInBudget(id); return; }
+    persistCurrent(); renderPreview();
+  });
+  document.getElementById('f-client-savebtn') && document.getElementById('f-client-savebtn').addEventListener('click', ()=>{
+    if(!current.client.name){ toast('Cargá al menos el nombre del cliente'); return; }
+    clients.push({ id:uid(), name:current.client.name, doc:current.client.cuitDni, phone:current.client.phone, email:current.client.email, address:current.client.address });
+    persistAll(); toast('Cliente guardado');
+  });
+  bind('f-client-name', (e)=>{ current.client.name = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-client-doc', (e)=>{ current.client.cuitDni = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-client-phone', (e)=>{ current.client.phone = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-client-email', (e)=>{ current.client.email = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-client-address', (e)=>{ current.client.address = e.target.value; persistCurrent(); renderPreview(); });
+
+  bindChange('f-disc-type', (e)=>{ current.globalDiscount.type = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-disc-value', (e)=>{ current.globalDiscount.value = parseFloat(e.target.value)||0; persistCurrent(); renderPreview(); });
+  const addSurchargeBtn = document.getElementById('f-add-surcharge');
+  if(addSurchargeBtn) addSurchargeBtn.addEventListener('click', ()=>{
+    current.surcharges.push({ id:uid(), label:'', type:'percent', value:0 });
+    persistCurrent();
+    document.querySelector('[data-secbody="totals"]').innerHTML = rebuildTotalsSection();
+    bindEditorEvents(); renderPreview();
+  });
+  bindChange('f-deposit-type', (e)=>{ current.deposit.type = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-deposit-value', (e)=>{ current.deposit.value = parseFloat(e.target.value)||0; persistCurrent(); renderPreview(); });
+
+  bind('f-paymentterms', (e)=>{ current.paymentTerms = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-deliveryterms', (e)=>{ current.deliveryTerms = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-notes', (e)=>{ current.notes = e.target.value; persistCurrent(); renderPreview(); });
+  bind('f-terms', (e)=>{ current.termsConditions = e.target.value; persistCurrent(); renderPreview(); });
+  bindChange('f-signature', (e)=>{ current.includeSignature = e.target.checked; persistCurrent(); renderPreview(); });
+  ['paymentTerms','deliveryTerms','notes','termsConditions'].forEach(fk=>{
+    bindChange('snip-select-'+fk, (e)=>{ applySnippet(fk, e.target.value); e.target.value=''; });
+  });
+
+  bindChange('f-font', (e)=>{ current.design.font = e.target.value; persistCurrent(); renderPreview(); });
+  bindChange('f-showlogo', (e)=>{ current.design.showLogo = e.target.checked; persistCurrent(); renderPreview(); });
+  bindChange('f-showunit', (e)=>{ current.design.showUnitColumn = e.target.checked; persistCurrent(); renderPreview(); });
+  const colorCustom = document.getElementById('f-color-custom');
+  if(colorCustom) colorCustom.addEventListener('input', (e)=>{ current.design.color = e.target.value; persistCurrent(); renderPreview(); });
+}
+
+/* ============================================================
+   PREVIEW RENDER
+   ============================================================ */
+const IVA_COND_LABEL = { no_mostrar:'', ri:'Responsable Inscripto', mono:'Monotributista', exento:'Exento', cf:'Consumidor Final' };
+
+function renderPreview(){
+  const totals = computeTotals(current);
+  applyBrandColorVars(current.design.color);
+  const fp = FONT_MAP[current.design.font] || FONT_MAP.classica;
+  document.documentElement.style.setProperty('--pdf-font-display', fp.display);
+  document.documentElement.style.setProperty('--pdf-font-body', fp.body);
+
+  const bizMetaLines = [
+    business.rubro,
+    IVA_COND_LABEL[business.ivaCond],
+    business.cuit ? 'CUIT: '+business.cuit : '',
+    business.address,
+    [business.phone, business.email].filter(Boolean).join(' · '),
+    business.web
+  ].filter(Boolean).join('<br>');
+
+  const docTitleWord = current.pedidoMode ? 'PEDIDO' : (current.docTitle || 'Presupuesto').toUpperCase();
+
+  const clientLines = [
+    current.client.cuitDni,
+    current.client.address,
+    [current.client.phone, current.client.email].filter(Boolean).join(' · ')
+  ].filter(Boolean).join('<br>');
+
+  let validUntil = '';
+  if(current.date && current.validity){
+    const d = new Date(current.date + 'T00:00:00');
+    d.setDate(d.getDate() + (parseInt(current.validity)||0));
+    validUntil = d.toLocaleDateString('es-AR');
+  }
+
+  // items grid (CSS Grid con divs, ver comentario en el CSS de .pv-grid sobre el porqué)
+  const gridCols = current.pedidoMode
+    ? (current.design.showUnitColumn ? '1fr 90px 100px' : '1fr 110px')
+    : (current.design.showUnitColumn ? '1fr 70px 90px 110px 130px' : '1fr 80px 120px 140px');
+
+  const ghead = current.pedidoMode
+    ? `<div class="gcell ghead">Descripción</div><div class="gcell ghead num">Cant.</div>${current.design.showUnitColumn ? '<div class="gcell ghead unit">Unidad</div>' : ''}`
+    : `<div class="gcell ghead">Descripción</div><div class="gcell ghead num">Cant.</div>${current.design.showUnitColumn ? '<div class="gcell ghead unit">Unidad</div>' : ''}<div class="gcell ghead num">Precio</div><div class="gcell ghead num">Subtotal</div>`;
+
+  let gbody = '';
+  let rowIdx = 0;
+  current.items.forEach(it=>{
+    if(it.kind==='section'){
+      gbody += `<div class="gcell section">${it.title||''}</div>`;
+      return;
+    }
+    const lineTotal = (Number(it.qty)||0)*(Number(it.price)||0);
+    const alt = rowIdx % 2 === 1 ? ' alt' : '';
+    gbody += `<div class="gcell desc${alt}"><b>${it.desc||''}</b></div>`;
+    gbody += `<div class="gcell num${alt}">${tnum(it.qty)}</div>`;
+    if(current.design.showUnitColumn) gbody += `<div class="gcell unit${alt}">${it.unit||''}</div>`;
+    if(!current.pedidoMode){
+      gbody += `<div class="gcell num${alt}">${fmtT(it.price)}</div>`;
+      gbody += `<div class="gcell num${alt}">${fmtT(lineTotal)}</div>`;
+    }
+    rowIdx++;
+  });
+  if(!current.items.length){
+    gbody = `<div class="gcell empty">Agregá ítems para verlos acá</div>`;
+  }
+
+  let totalsHtml = '';
+  if(!current.pedidoMode){
+    let ivaLines = '';
+    if(current.ivaBreakdown){
+      Object.keys(totals.ivaGroups).sort((a,b)=>a-b).forEach(rate=>{
+        if(totals.ivaGroups[rate] > 0.004){
+          ivaLines += `<div class="tline"><span>IVA ${rate}%</span><span>${fmtT(totals.ivaGroups[rate])}</span></div>`;
+        }
+      });
+    }
+    totalsHtml = `
+      <div class="pv-totals"><div class="pv-totals-box">
+        <div class="tline"><span>Subtotal</span><span>${fmtT(totals.subtotalNeto)}</span></div>
+        ${totals.discountAmount>0 ? `<div class="tline"><span>Descuento</span><span>− ${fmtT(totals.discountAmount)}</span></div>` : ''}
+        ${totals.surchargeLines.map(s=>`<div class="tline"><span>${s.label||'Adicional'}</span><span>${fmtT(s.amount)}</span></div>`).join('')}
+        ${ivaLines}
+        <div class="tline total"><span>TOTAL</span><span>${fmtT(totals.grandTotal)}</span></div>
+        ${totals.depositAmount>0 ? `<div class="tline seña"><span>Seña para confirmar</span><span>${fmtT(totals.depositAmount)}</span></div>
+        <div class="tline"><span>Saldo restante</span><span>${fmtT(totals.balanceDue)}</span></div>` : ''}
+      </div></div>`;
+  }
+
+  const notesHtml = `
+    <div class="pv-notes">
+      ${current.paymentTerms ? `<div class="blk"><b>Forma de pago</b>${current.paymentTerms}</div>` : ''}
+      ${current.deliveryTerms ? `<div class="blk"><b>Plazo de entrega</b>${current.deliveryTerms}</div>` : ''}
+      ${current.notes ? `<div class="blk wide"><b>Notas</b>${current.notes.replace(/\n/g,'<br>')}</div>` : ''}
+      ${current.termsConditions ? `<div class="blk wide"><b>Términos y condiciones</b>${current.termsConditions.replace(/\n/g,'<br>')}</div>` : ''}
+    </div>`;
+
+  const shownAccounts = accounts.filter(a=>current.accountsShown.includes(a.id));
+  const accountsHtml = shownAccounts.length ? `
+    <div class="pv-accounts">
+      <b>Datos para transferencia</b>
+      ${shownAccounts.map(a=>`${a.label}: ${(a.details||'').replace(/\n/g,' · ')}`).join('<br>')}
+    </div>` : '';
+
+  const signHtml = current.includeSignature ? `
+    <div class="pv-sign">
+      <div class="line">
+        ${business.signature ? `<img src="${business.signature}" style="max-width:140px; max-height:56px; object-fit:contain; display:block; margin:0 auto 4px;">` : ''}
+        Firma
+      </div>
+      <div class="line">Aclaración</div>
+    </div>` : '';
+
+  document.getElementById('pdf-preview').innerHTML = `
+    <div class="pv-spine"></div>
+    <div class="pv-body">
+    <div class="pv-header">
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        ${current.design.showLogo && business.logo ? `<img class="pv-logo" src="${business.logo}">` : ''}
+        <div>
+          <div class="pv-biz-name">${business.name || 'Tu negocio'}</div>
+          ${business.slogan ? `<div class="pv-biz-slogan">${business.slogan}</div>` : ''}
+          <div class="pv-biz-meta">${bizMetaLines}</div>
+        </div>
+      </div>
+      <div class="pv-doc-title">
+        <div class="t">${docTitleWord}</div>
+        <div class="n">N° ${current.number}</div>
+      </div>
+    </div>
+    <div class="pv-meta-grid">
+      <div class="pv-client-box">
+        <div class="label">${current.pedidoMode ? 'Proveedor' : 'Cliente'}</div>
+        <b>${current.client.name || 'Sin datos cargados'}</b>
+        ${clientLines}
+      </div>
+      <div class="pv-meta-box">
+        <div><span class="k">Fecha</span>${current.date ? new Date(current.date+'T00:00:00').toLocaleDateString('es-AR') : ''}</div>
+        ${!current.pedidoMode ? `<div><span class="k">Validez</span>${current.validity} días${validUntil ? ' · hasta '+validUntil : ''}</div>` : ''}
+      </div>
+    </div>
+    <div class="pv-grid" style="grid-template-columns:${gridCols};">
+      ${ghead}
+      ${gbody}
+    </div>
+    ${totalsHtml}
+    ${notesHtml}
+    ${accountsHtml}
+    ${signHtml}
+    <div class="pv-footer-stamp">Generado con Presu•App</div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   NEW / SAVE
+   ============================================================ */
+document.getElementById('btn-new').addEventListener('click', ()=>{
+  confirmModal('Nuevo presupuesto', '¿Descartar el presupuesto actual y empezar uno nuevo? (si ya lo guardaste, queda en el historial)', ()=>{
+    current = blankBudget();
+    persistCurrent(); renderEditor(); renderPreview();
+  });
+});
+document.getElementById('btn-save').addEventListener('click', ()=>{
+  const idx = budgets.findIndex(b=>b.id===current.id);
+  if(idx>=0) budgets[idx] = JSON.parse(JSON.stringify(current));
+  else budgets.push(JSON.parse(JSON.stringify(current)));
+  persistAll();
+  toast('Presupuesto guardado en el historial');
+});
+
+/* ============================================================
+   EXPORT: PDF / PNG / WHATSAPP
+   ============================================================ */
+async function renderToCanvas(){
+  if(typeof html2canvas === 'undefined'){
+    throw new Error('LIBS_NOT_LOADED');
+  }
+  const node = document.getElementById('pdf-preview');
+  // Make sure the webfonts (Fraunces/Space Grotesk/Playfair/Lora) are fully
+  // loaded before rasterizing — otherwise the export can silently fall back
+  // to a generic system font and look noticeably worse than the on-screen preview.
+  try{
+    if(document.fonts && document.fonts.ready){
+      await document.fonts.ready;
+      // give the browser one more frame to actually apply the swap
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    }
+  }catch(e){ /* ignore, proceed with whatever is loaded */ }
+
+  // Try progressively lower resolutions in case the device can't handle a
+  // huge canvas (common on older phones) or a transient render glitch occurs.
+  const scales = [3, 2, 1.5];
+  let lastErr = null;
+  for(const scale of scales){
+    try{
+      return await html2canvas(node, {
+        scale,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        imageTimeout: 15000,
+        logging: false
+      });
+    }catch(e){
+      lastErr = e;
+      console.error('html2canvas failed at scale', scale, e);
+    }
+  }
+  throw lastErr || new Error('CANVAS_FAILED');
+}
+function explainExportError(e){
+  if(e && e.message === 'LIBS_NOT_LOADED'){
+    return 'No se pudieron cargar las librerías de exportación. Revisá tu conexión a internet e intentá de nuevo.';
+  }
+  return 'No se pudo generar el archivo. Probá de nuevo; si persiste, avisame qué navegador usás.';
+}
+/* ============================================================
+   PDF PAGE-BREAK HELPERS
+   Busca puntos "seguros" para cortar de página (bordes de fila de
+   tabla, secciones) para no partir una fila del medio.
+   ============================================================ */
+function collectPageBreakCandidates(){
+  const root = document.getElementById('pdf-preview');
+  const rootTop = root.getBoundingClientRect().top;
+  const candidates = new Set([0]);
+  const selectors = ['.pv-header','.pv-meta-grid','.pv-table','.pv-table tbody tr','.pv-totals','.pv-notes','.pv-notes .blk','.pv-accounts','.pv-sign'];
+  selectors.forEach(sel=>{
+    root.querySelectorAll(sel).forEach(el=>{
+      candidates.add(el.getBoundingClientRect().top - rootTop);
+      candidates.add(el.getBoundingClientRect().bottom - rootTop);
+    });
+  });
+  candidates.add(root.getBoundingClientRect().height);
+  return Array.from(candidates).filter(v=>v>=0).sort((a,b)=>a-b);
+}
+
+async function buildPdfFromPreview(){
+  const canvas = await renderToCanvas();
+  const node = document.getElementById('pdf-preview');
+  const nodeWidthCss = node.getBoundingClientRect().width;
+  const scaleUsed = canvas.width / nodeWidthCss;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const marginMm = 10;   // aire alrededor del contenido en cada página
+  const footerMm = 8;    // espacio reservado abajo para "Página X de Y"
+  const usableWidthMm = pageWidth - marginMm*2;
+  const mmPerPx = usableWidthMm / canvas.width;
+  const usableHeightPx = (pageHeight - marginMm*2 - footerMm) / mmPerPx;
+
+  const breakPointsPx = collectPageBreakCandidates().map(v=>v*scaleUsed);
+  if(breakPointsPx[breakPointsPx.length-1] < canvas.height) breakPointsPx.push(canvas.height);
+
+  let cursorPx = 0;
+  let pageCount = 0;
+  while(cursorPx < canvas.height - 1){
+    const targetPx = Math.min(cursorPx + usableHeightPx, canvas.height);
+    let cut = targetPx;
+    for(let i=breakPointsPx.length-1; i>=0; i--){
+      if(breakPointsPx[i] > cursorPx + 2 && breakPointsPx[i] <= targetPx + 0.5){ cut = breakPointsPx[i]; break; }
+    }
+    if(cut <= cursorPx) cut = targetPx; // salvaguarda por si no hubo corte natural válido
+    cut = Math.min(cut, canvas.height);
+    const sliceHeightPx = Math.max(1, Math.round(cut - cursorPx));
+
+    const sliceCanvas = document.createElement('canvas');
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = sliceHeightPx;
+    const sctx = sliceCanvas.getContext('2d');
+    sctx.fillStyle = '#ffffff';
+    sctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+    sctx.drawImage(canvas, 0, cursorPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+    const sliceData = sliceCanvas.toDataURL('image/png');
+    const sliceHeightMm = sliceHeightPx * mmPerPx;
+
+    if(pageCount > 0) pdf.addPage();
+    pdf.addImage(sliceData, 'PNG', marginMm, marginMm, usableWidthMm, sliceHeightMm);
+    pageCount++;
+    cursorPx = cut;
+  }
+
+  if(pageCount > 1){
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(150,155,168);
+    for(let i=1; i<=pageCount; i++){
+      pdf.setPage(i);
+      pdf.text(`Página ${i} de ${pageCount}`, pageWidth/2, pageHeight - marginMm/2, { align:'center' });
+    }
+  }
+  return pdf;
+}
+
+document.getElementById('btn-download').addEventListener('click', ()=>{
+  openModal(`
+    <h3>Descargar presupuesto</h3>
+    <p style="color:var(--text-dim); font-size:13.5px; margin-bottom:18px;">¿En qué formato lo querés guardar?</p>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn" id="dl-cancel">Cancelar</button>
+      <button class="btn" id="dl-png">🖼️ Como PNG</button>
+      <button class="btn btn-primary" id="dl-pdf">📄 Como PDF</button>
+    </div>
+  `);
+  document.getElementById('dl-cancel').onclick = closeModal;
+  document.getElementById('dl-png').onclick = ()=>{ closeModal(); downloadAs('png'); };
+  document.getElementById('dl-pdf').onclick = ()=>{ closeModal(); downloadAs('pdf'); };
+});
+
+async function downloadAs(format){
+  toast(`Generando ${format.toUpperCase()}...`);
+  try{
+    if(format === 'pdf'){
+      const pdf = await buildPdfFromPreview();
+      pdf.save(`${current.number || 'presupuesto'}.pdf`);
+    } else {
+      const canvas = await renderToCanvas();
+      const link = document.createElement('a');
+      link.download = `${current.number || 'presupuesto'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    toast(`${format.toUpperCase()} descargado ✓`);
+  }catch(e){ console.error(e); toast(explainExportError(e), 4200); }
+}
+document.getElementById('btn-whatsapp').addEventListener('click', ()=>{
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const phone = (current.client.phone || '').replace(/[^0-9]/g,'');
+
+  if(isMobile && navigator.canShare){
+    // En el celular se puede adjuntar el archivo directo en el selector nativo,
+    // así que preguntamos el formato antes de compartirlo (sin texto agregado).
+    openModal(`
+      <h3>Enviar por WhatsApp</h3>
+      <p style="color:var(--text-dim); font-size:13.5px; margin-bottom:18px;">Se comparte el archivo directo al chat, sin texto agregado. ¿En qué formato?</p>
+      <div class="btn-row" style="justify-content:flex-end;">
+        <button class="btn" id="wa-cancel">Cancelar</button>
+        <button class="btn" id="wa-png">🖼️ Como PNG</button>
+        <button class="btn btn-primary" id="wa-pdf">📄 Como PDF</button>
+      </div>
+    `);
+    document.getElementById('wa-cancel').onclick = closeModal;
+    document.getElementById('wa-png').onclick = ()=>{ closeModal(); shareFileToWhatsApp('png'); };
+    document.getElementById('wa-pdf').onclick = ()=>{ closeModal(); shareFileToWhatsApp('pdf'); };
+  } else {
+    // En la compu no se puede adjuntar un archivo a una web por seguridad del
+    // navegador, así que no descargamos nada solos acá: simplemente abrimos
+    // el chat. Para adjuntar, usá los botones "Descargar PDF" o "PNG" de al
+    // lado y arrastrá el archivo al chat que se abre.
+    const url = phone ? `https://web.whatsapp.com/send?phone=${phone}` : `https://web.whatsapp.com`;
+    window.open(url, '_blank');
+    toast('Se abrió WhatsApp Web — descargalo con el botón "Descargar" y adjuntalo ahí', 4600);
+  }
+});
+
+async function shareFileToWhatsApp(format){
+  const filename = `${current.number || 'presupuesto'}.${format}`;
+  toast(`Generando ${format.toUpperCase()}...`);
+  let file;
+  try{
+    if(format === 'pdf'){
+      const pdf = await buildPdfFromPreview();
+      file = new File([pdf.output('blob')], filename, { type:'application/pdf' });
+    } else {
+      const canvas = await renderToCanvas();
+      const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+      file = new File([blob], filename, { type:'image/png' });
+    }
+  }catch(e){ console.error(e); toast(explainExportError(e), 4200); return; }
+
+  try{
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file] });
+      return;
+    }
+    throw new Error('SHARE_NOT_SUPPORTED');
+  }catch(e){
+    if(e && e.name === 'AbortError') return; // el usuario cerró el selector: no es un error
+    // Última salida: descargamos el archivo y abrimos la app de WhatsApp para adjuntarlo a mano.
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    const phone = (current.client.phone || '').replace(/[^0-9]/g,'');
+    window.open(`https://wa.me/${phone}`, '_blank');
+    toast(`Se descargó el ${format.toUpperCase()} — adjuntalo a mano en WhatsApp`, 4500);
+  }
+}
+
+document.getElementById('btn-email').addEventListener('click', async ()=>{
+  const totals = computeTotals(current);
+  const subject = `${current.docTitle} N° ${current.number}${business.name ? ' — '+business.name : ''}`;
+  const bodyLines = [
+    `Hola${current.client.name ? ' ' + current.client.name.split(' ')[0] : ''},`,
+    '',
+    `Te comparto el ${(current.docTitle||'presupuesto').toLowerCase()} N° ${current.number}${business.name ? ' de '+business.name : ''}.`,
+    !current.pedidoMode ? `TOTAL: ${fmt(totals.grandTotal)}` : '',
+    current.date ? `Fecha: ${new Date(current.date+'T00:00:00').toLocaleDateString('es-AR')}` : '',
+    '',
+    'Cualquier consulta, quedo a disposición.',
+    business.name ? `Saludos, ${business.name}` : 'Saludos'
+  ].filter(Boolean);
+  const body = bodyLines.join('\n');
+
+  // On mobile, the native share sheet includes the Mail app and lets us attach the file directly.
+  try{
+    const canvas = await renderToCanvas();
+    const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+    const file = new File([blob], `${current.number||'presupuesto'}.png`, { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title: subject, text: body });
+      return;
+    }
+  }catch(e){ /* fall through to mailto */ }
+
+  // Desktop fallback: mailto can't attach files, so we open the mail client with the text ready
+  // and remind the person to attach the PDF they download separately.
+  const mailto = `mailto:${encodeURIComponent(current.client.email||'')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n(Adjuntá el PDF que descargaste desde la app)')}`;
+  window.location.href = mailto;
+  toast('Se abrió tu cliente de correo — no te olvides de adjuntar el PDF', 4000);
+});
+
+/* ============================================================
+   BACKUP BUTTONS
+   ============================================================ */
+document.getElementById('btn-export-backup').addEventListener('click', exportBackup);
+document.getElementById('btn-import-backup').addEventListener('click', ()=>{
+  document.getElementById('import-backup-input').click();
+});
+document.getElementById('import-backup-input').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) readBackupFile(file);
+  e.target.value = ''; // allow re-selecting the same file later
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderEditor();
+renderPreview();
+
+</script>
+</body>
+</html>
