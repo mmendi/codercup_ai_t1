@@ -1,0 +1,5 @@
+Cotizar trabajos de electricista en Argentina suele ser un lío: precios de AAIERIC que cambian cada mes, cálculos en Excel, márgenes, monedas distintas, exportar y mandar por WhatsApp o mail… todo manual y fácil de equivocarse.
+
+Nuestra app lo simplifica: precios AAIERIC siempre al día, catálogo de ítems y combos para armar presupuestos en segundos, totales y márgenes calculados automáticamente, multi‑moneda, clientes guardados para reutilizar, exportación en PDF/PNG con tu marca y seguimiento de estados. Funciona directo en tu compu o celular, sin servidor ni internet.
+
+En resumen: convierte un proceso lento y repetitivo en minutos, con todo actualizado y ordenado en tu propio dispositivo.

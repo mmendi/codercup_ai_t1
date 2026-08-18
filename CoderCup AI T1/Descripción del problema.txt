@@ -1,4 +1,4 @@
-El problema que resuelve
+El problema que resuelve la app
 
 Cotizar trabajos de electricista en Argentina a mano es un quilombo: tenés que buscar los precios de mano de obra de AAIERIC (que se actualizan mes a mes por porcentaje), armar el presupuesto en Word o Excel, calcular márgenes, convertir a distintas monedas si el cliente lo pide, exportarlo prolijo, y después mandarlo por WhatsApp o mail. Cada paso es manual y repetitivo, y es fácil que se te escape un ítem desactualizado o un cálculo mal hecho.
 
