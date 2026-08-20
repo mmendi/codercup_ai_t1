@@ -639,7 +639,7 @@ function blankBudget(){
     includeSignature: false,
     showCosts: false,
     accountsShown: [],
-    design: { color:'#2a5bd7', font:'classica', showLogo:true, showUnitColumn:true },
+    design: { color:'#2a5bd7', font:'moderna', showLogo:true, showUnitColumn:true },
     status: 'draft',
     createdAt: Date.now()
   };
@@ -784,7 +784,7 @@ function readBackupFile(file){
         if(!current.globalDiscount) current.globalDiscount = { type:'percent', value:0 };
         if(!current.surcharges) current.surcharges = [];
         if(!current.deposit) current.deposit = { type:'percent', value:0 };
-        if(!current.design) current.design = { color:'#2a5bd7', font:'classica', showLogo:true, showUnitColumn:true };
+        if(!current.design) current.design = { color:'#2a5bd7', font:'moderna', showLogo:true, showUnitColumn:true };
         if(!current.accountsShown) current.accountsShown = [];
         if(typeof current.showCosts !== 'boolean') current.showCosts = false;
 
@@ -2103,8 +2103,8 @@ function renderEditor(){
       </div>
     </div>
     ${fieldHtml({label:'Tipografía del documento', id:'f-font', options:[
-      {value:'classica', label:'Clásica'},
       {value:'moderna', label:'Moderna'},
+      {value:'classica', label:'Clásica'},
       {value:'elegante', label:'Elegante'}
     ], value:current.design.font})}
     <label class="checkline"><input type="checkbox" id="f-showlogo" ${current.design.showLogo?'checked':''}> Mostrar logo</label>
